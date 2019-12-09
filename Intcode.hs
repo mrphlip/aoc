@@ -3,6 +3,7 @@ module Intcode (IntcodeMem, Intcode, icstep, icrun, readProg) where
 import Data.Array
 import Data.List
 import Data.Maybe
+import Data.Ix
 import Control.Exception
 import Control.Monad
 import Debug.Trace
@@ -18,31 +19,47 @@ icstep :: (Ix a, Integral a, Show a) => Intcode a -> Maybe (Intcode a)
 --icstep (ip, mem, inp, outp) = traceShow (ip, [mem ! x | x <- [ip..min (ip+3) (snd $ bounds mem)]], listToMaybe inp, listToMaybe (outp [])) $ icstep_ (ip, mem, inp, outp)
 icstep = icstep_
 
+changeBounds :: (Ix i) => (i,i) -> a -> Array i a -> Array i a
+changeBounds newrange def arr = cleared
+	where
+		oldrange = bounds arr
+		expanded = ixmap newrange ixmapfunc arr
+		ixmapfunc ix
+			| inRange oldrange ix = ix
+			| otherwise = fst oldrange
+		cleared = expanded // [ (ix,def) | ix <- range newrange, not $ inRange oldrange ix ]
+
 icstep_ :: (Ix a, Integral a, Show a) => Intcode a -> Maybe (Intcode a)
 icstep_ (ip, mem, inp, outp)
-	| opcode == 1 = assert (mode3 == 0) $ Just (ip + 4, mem // [(op3, val1 + val2)], inp, outp)  -- Add
-	| opcode == 2 = assert (mode3 == 0) $ Just (ip + 4, mem // [(op3, val1 * val2)], inp, outp)  -- Multiply
-	| opcode == 3 = assert (mode1 == 0) $ Just (ip + 2, mem // [(op1, head inp)], tail inp, outp)  -- Input
+	| opcode == 1 = assert (mode3 == 0) $ Just (ip + 4, setval op3 (val1 + val2), inp, outp)  -- Add
+	| opcode == 2 = assert (mode3 == 0) $ Just (ip + 4, setval op3 (val1 * val2), inp, outp)  -- Multiply
+	| opcode == 3 = assert (mode1 == 0) $ Just (ip + 2, setval op1 (head inp), tail inp, outp)  -- Input
 	| opcode == 4 = Just (ip + 2, mem, inp, outp . (val1:)) -- Output
 	| opcode == 5 = Just (if val1 /= 0 then val2 else ip + 3, mem, inp, outp) -- JNZ
 	| opcode == 6 = Just (if val1 == 0 then val2 else ip + 3, mem, inp, outp) -- JZ
-	| opcode == 7 = assert (mode3 == 0) $ Just (ip + 4, mem // [(op3, if val1 < val2 then 1 else 0)], inp, outp) -- less-than
-	| opcode == 8 = assert (mode3 == 0) $ Just (ip + 4, mem // [(op3, if val1 == val2 then 1 else 0)], inp, outp) -- equal-to
+	| opcode == 7 = assert (mode3 == 0) $ Just (ip + 4, setval op3 (if val1 < val2 then 1 else 0), inp, outp) -- less-than
+	| opcode == 8 = assert (mode3 == 0) $ Just (ip + 4, setval op3 (if val1 == val2 then 1 else 0), inp, outp) -- equal-to
 	| opcode == 99 = Nothing
 	where
-		instr = mem ! ip
+		instr = getval ip
 		opcode = instr `mod` 100
 		mode1 = (instr `div` 100) `mod` 10
 		mode2 = (instr `div` 1000) `mod` 10
 		mode3 = (instr `div` 10000) `mod` 10
-		getval 0 x = mem ! x
-		getval 1 x = x
-		op1 = mem ! (ip + 1)
-		val1 = getval mode1 op1
-		op2 = mem ! (ip + 2)
-		val2 = getval mode2 op2
-		op3 = mem ! (ip + 3)
-		val3 = getval mode3 op3
+		getoper 0 x = getval x
+		getoper 1 x = x
+		op1 = getval (ip + 1)
+		val1 = getoper mode1 op1
+		op2 = getval (ip + 2)
+		val2 = getoper mode2 op2
+		op3 = getval (ip + 3)
+		val3 = getoper mode3 op3
+		getval ix
+			| inRange (bounds mem) ix = mem ! ix
+			| ix > 0 = 0
+		setval ix val
+			| inRange (bounds mem) ix = mem // [(ix, val)]
+			| ix > 0 = changeBounds (0,ix) 0 mem // [(ix, val)]
 
 icrun :: (Ix a, Integral a, Show a) => Intcode a -> Intcode a
 icrun = last . (unfoldr iterfunc)
@@ -92,6 +109,10 @@ tests = do
 	checkProg longtest_5b [5]  46 [] [999]
 	checkProg longtest_5b [8]  46 [] [1000]
 	checkProg longtest_5b [10]  46 [] [1001]
+
+	-- tests from 9
+	checkProg [1102,34915192,34915192,7,4,7,99] []  6 [] [1219070632396864]
+	checkProg [104,1125899906842624,99] []  2 [] [1125899906842624]
 
 	where
 		check True = return ()
