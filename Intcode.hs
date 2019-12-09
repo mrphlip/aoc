@@ -10,13 +10,13 @@ import Debug.Trace
 import Utils
 
 type IntcodeMem a = Array a a
-type Intcode a = (a, IntcodeMem a, [a], [a] -> [a]) -- (IP, Memory, Input, Output)
+type Intcode a = (a, IntcodeMem a, [a], [a] -> [a], a) -- (IP, Memory, Input, Output, Base)
 
 readProg :: (Ix a, Num a, Read a) => String -> IntcodeMem a
 readProg s = listArrayLen $ map read $ split ',' $ takeWhile (/='\n') s
 
 icstep :: (Ix a, Integral a, Show a) => Intcode a -> Maybe (Intcode a)
---icstep (ip, mem, inp, outp) = traceShow (ip, [mem ! x | x <- [ip..min (ip+3) (snd $ bounds mem)]], listToMaybe inp, listToMaybe (outp [])) $ icstep_ (ip, mem, inp, outp)
+--icstep (ip, mem, inp, outp, base) = traceShow (ip, [mem ! x | x <- [ip..min (ip+3) (snd $ bounds mem)]], listToMaybe inp, listToMaybe (outp []), base) $ icstep_ (ip, mem, inp, outp, base)
 icstep = icstep_
 
 changeBounds :: (Ix i) => (i,i) -> a -> Array i a -> Array i a
@@ -30,30 +30,34 @@ changeBounds newrange def arr = cleared
 		cleared = expanded // [ (ix,def) | ix <- range newrange, not $ inRange oldrange ix ]
 
 icstep_ :: (Ix a, Integral a, Show a) => Intcode a -> Maybe (Intcode a)
-icstep_ (ip, mem, inp, outp)
-	| opcode == 1 = assert (mode3 == 0) $ Just (ip + 4, setval op3 (val1 + val2), inp, outp)  -- Add
-	| opcode == 2 = assert (mode3 == 0) $ Just (ip + 4, setval op3 (val1 * val2), inp, outp)  -- Multiply
-	| opcode == 3 = assert (mode1 == 0) $ Just (ip + 2, setval op1 (head inp), tail inp, outp)  -- Input
-	| opcode == 4 = Just (ip + 2, mem, inp, outp . (val1:)) -- Output
-	| opcode == 5 = Just (if val1 /= 0 then val2 else ip + 3, mem, inp, outp) -- JNZ
-	| opcode == 6 = Just (if val1 == 0 then val2 else ip + 3, mem, inp, outp) -- JZ
-	| opcode == 7 = assert (mode3 == 0) $ Just (ip + 4, setval op3 (if val1 < val2 then 1 else 0), inp, outp) -- less-than
-	| opcode == 8 = assert (mode3 == 0) $ Just (ip + 4, setval op3 (if val1 == val2 then 1 else 0), inp, outp) -- equal-to
+icstep_ (ip, mem, inp, outp, base)
+	| opcode == 1 = Just (ip + 4, setop 3 (val1 + val2), inp, outp, base)  -- Add
+	| opcode == 2 = Just (ip + 4, setop 3 (val1 * val2), inp, outp, base)  -- Multiply
+	| opcode == 3 = Just (ip + 2, setop 1 (head inp), tail inp, outp, base)  -- Input
+	| opcode == 4 = Just (ip + 2, mem, inp, outp . (val1:), base) -- Output
+	| opcode == 5 = Just (if val1 /= 0 then val2 else ip + 3, mem, inp, outp, base) -- JNZ
+	| opcode == 6 = Just (if val1 == 0 then val2 else ip + 3, mem, inp, outp, base) -- JZ
+	| opcode == 7 = Just (ip + 4, setop 3 (if val1 < val2 then 1 else 0), inp, outp, base) -- less-than
+	| opcode == 8 = Just (ip + 4, setop 3 (if val1 == val2 then 1 else 0), inp, outp, base) -- equal-to
+	| opcode == 9 = Just (ip + 2, mem, inp, outp, base + val1) -- Adjust base
 	| opcode == 99 = Nothing
 	where
 		instr = getval ip
 		opcode = instr `mod` 100
-		mode1 = (instr `div` 100) `mod` 10
-		mode2 = (instr `div` 1000) `mod` 10
-		mode3 = (instr `div` 10000) `mod` 10
+		mode 1 = (instr `div` 100) `mod` 10
+		mode 2 = (instr `div` 1000) `mod` 10
+		mode 3 = (instr `div` 10000) `mod` 10
 		getoper 0 x = getval x
 		getoper 1 x = x
-		op1 = getval (ip + 1)
-		val1 = getoper mode1 op1
-		op2 = getval (ip + 2)
-		val2 = getoper mode2 op2
-		op3 = getval (ip + 3)
-		val3 = getoper mode3 op3
+		getoper 2 x = getval (x + base)
+		setoper 0 x v = setval x v
+		setoper 1 x v = throw $ AssertionFailed "write to immediate"
+		setoper 2 x v = setval (x + base) v
+		readop n = getoper (mode n) (getval (ip + n))
+		setop n v = setoper (mode n) (getval (ip + n)) v
+		val1 = readop 1
+		val2 = readop 2
+		val3 = readop 3
 		getval ix
 			| inRange (bounds mem) ix = mem ! ix
 			| ix > 0 = 0
@@ -111,6 +115,8 @@ tests = do
 	checkProg longtest_5b [10]  46 [] [1001]
 
 	-- tests from 9
+	let quine = [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99]
+	checkProg quine []  15 [] quine
 	checkProg [1102,34915192,34915192,7,4,7,99] []  6 [] [1219070632396864]
 	checkProg [104,1125899906842624,99] []  2 [] [1125899906842624]
 
@@ -119,7 +125,7 @@ tests = do
 		check False = throwIO $ AssertionFailed "test failed"
 		checkProg code inp  expip expmem expoutp = do
 			--print code
-			let (ip, mem, inpleft, outp) = icrun (0, listArrayLen code, inp, id)
+			let (ip, mem, inpleft, outp, base) = icrun (0, listArrayLen code, inp, id, 0)
 			check $ ip == expip
 			check $ null expmem || elems mem == expmem
 			check $ null inpleft
