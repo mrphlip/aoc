@@ -33,13 +33,9 @@ instance Ord Direction where
 		where
 			segment x y
 				| x == 0 && y < 0 = 1
-				| x > 0 && y < 0 = 2
-				| x > 0 && y == 0 = 3
-				| x > 0 && y > 0 = 4
-				| x == 0 && y > 0 = 5
-				| x < 0 && y > 0 = 6
-				| x < 0 && y == 0 = 7
-				| x < 0 && y < 0 = 8
+				| x > 0 = 2
+				| x == 0 && y > 0 = 3
+				| x < 0 = 4
 			aseg = segment ax ay
 			bseg = segment bx by
 
