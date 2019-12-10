@@ -23,7 +23,7 @@ fromDirection :: Point -> Direction -> Point
 fromDirection (x, y) (Direction dx dy) = (x + dx, y + dy)
 
 instance Eq Direction where
-	Direction ax ay == Direction bx by = (ax * by) == (bx * ay)
+	Direction ax ay == Direction bx by = signum ax == signum bx && signum ay == signum by && (ax * by) == (bx * ay)
 instance Ord Direction where
 	-- sort into clockwise order - such that directly up is the lowest, and just
 	-- left of up is the highest
