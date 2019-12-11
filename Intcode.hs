@@ -21,21 +21,11 @@ icinit prog = (0, prog, [], id, 0)
 icinitInp :: (Ix a, Num a) => IntcodeMem a -> [a] -> Intcode a
 icinitInp prog inp = (0, prog, inp, id, 0)
 
-icstep :: (Ix a, Integral a, Show a) => Intcode a -> Maybe (Intcode a)
+icstep :: (ExpandIx a, Integral a, Show a) => Intcode a -> Maybe (Intcode a)
 --icstep (ip, mem, inp, outp, base) = traceShow (ip, [mem ! x | x <- [ip..min (ip+3) (snd $ bounds mem)]], listToMaybe inp, listToMaybe (outp []), base) $ icstep_ (ip, mem, inp, outp, base)
 icstep = icstep_
 
-changeBounds :: (Ix i) => (i,i) -> a -> Array i a -> Array i a
-changeBounds newrange def arr = cleared
-	where
-		oldrange = bounds arr
-		expanded = ixmap newrange ixmapfunc arr
-		ixmapfunc ix
-			| inRange oldrange ix = ix
-			| otherwise = fst oldrange
-		cleared = expanded // [ (ix,def) | ix <- range newrange, not $ inRange oldrange ix ]
-
-icstep_ :: (Ix a, Integral a, Show a) => Intcode a -> Maybe (Intcode a)
+icstep_ :: (ExpandIx a, Integral a, Show a) => Intcode a -> Maybe (Intcode a)
 icstep_ (ip, mem, inp, outp, base)
 	| opcode == 1 = Just (ip + 4, setop 3 (val1 + val2), inp, outp, base)  -- Add
 	| opcode == 2 = Just (ip + 4, setop 3 (val1 * val2), inp, outp, base)  -- Multiply
@@ -64,21 +54,17 @@ icstep_ (ip, mem, inp, outp, base)
 		val1 = readop 1
 		val2 = readop 2
 		val3 = readop 3
-		getval ix
-			| inRange (bounds mem) ix = mem ! ix
-			| ix > 0 = 0
-		setval ix val
-			| inRange (bounds mem) ix = mem // [(ix, val)]
-			| ix > 0 = changeBounds (0,ix) 0 mem // [(ix, val)]
+		getval ix = getExpand ix 0 mem
+		setval ix val = setExpand ix val 0 mem
 
-icrun :: (Ix a, Integral a, Show a) => Intcode a -> Intcode a
+icrun :: (ExpandIx a, Integral a, Show a) => Intcode a -> Intcode a
 icrun = last . (unfoldr iterfunc)
 	where iterfunc = (liftM (\x->(x,x))) . icstep
 
-icrunMem :: (Ix a, Integral a, Show a) => Intcode a -> IntcodeMem a
+icrunMem :: (ExpandIx a, Integral a, Show a) => Intcode a -> IntcodeMem a
 icrunMem machine = mem
 	where (_,mem,_,_,_) = icrun machine
-icrunOutp :: (Ix a, Integral a, Show a) => Intcode a -> [a]
+icrunOutp :: (ExpandIx a, Integral a, Show a) => Intcode a -> [a]
 icrunOutp machine = outp []
 	where (_,_,_,outp,_) = icrun machine
 
@@ -136,6 +122,7 @@ tests = do
 	where
 		check True = return ()
 		check False = throwIO $ AssertionFailed "test failed"
+		checkProg :: [Integer] -> [Integer] -> Integer -> [Integer] -> [Integer] -> IO ()
 		checkProg code inp  expip expmem expoutp = do
 			--print code
 			let (ip, mem, inpleft, outp, base) = icrun (0, listArrayLen code, inp, id, 0)
