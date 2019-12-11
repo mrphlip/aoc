@@ -15,7 +15,5 @@ getInput = do
 main :: IO ()
 main = do
 	code <- getInput
-	let (_, _, _, output, _) = icrun (0, code, [1], id, 0)
-	print $ output []
-	let (_, _, _, output, _) = icrun (0, code, [2], id, 0)
-	print $ output []
+	print $ icrunOutp $ icinitInp code [1]
+	print $ icrunOutp $ icinitInp code [2]

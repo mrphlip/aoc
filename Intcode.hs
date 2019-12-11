@@ -1,4 +1,4 @@
-module Intcode (IntcodeMem, Intcode, icstep, icrun, readProg) where
+module Intcode (IntcodeMem, Intcode, icinit, icinitInp, icstep, icrun, icrunMem, icrunOutp, readProg) where
 
 import Data.Array
 import Data.List
@@ -14,6 +14,12 @@ type Intcode a = (a, IntcodeMem a, [a], [a] -> [a], a) -- (IP, Memory, Input, Ou
 
 readProg :: (Ix a, Num a, Read a) => String -> IntcodeMem a
 readProg s = listArrayLen $ map read $ split ',' $ takeWhile (/='\n') s
+
+icinit :: (Ix a, Num a) => IntcodeMem a -> Intcode a
+icinit prog = (0, prog, [], id, 0)
+
+icinitInp :: (Ix a, Num a) => IntcodeMem a -> [a] -> Intcode a
+icinitInp prog inp = (0, prog, inp, id, 0)
 
 icstep :: (Ix a, Integral a, Show a) => Intcode a -> Maybe (Intcode a)
 --icstep (ip, mem, inp, outp, base) = traceShow (ip, [mem ! x | x <- [ip..min (ip+3) (snd $ bounds mem)]], listToMaybe inp, listToMaybe (outp []), base) $ icstep_ (ip, mem, inp, outp, base)
@@ -68,6 +74,13 @@ icstep_ (ip, mem, inp, outp, base)
 icrun :: (Ix a, Integral a, Show a) => Intcode a -> Intcode a
 icrun = last . (unfoldr iterfunc)
 	where iterfunc = (liftM (\x->(x,x))) . icstep
+
+icrunMem :: (Ix a, Integral a, Show a) => Intcode a -> IntcodeMem a
+icrunMem machine = mem
+	where (_,mem,_,_,_) = icrun machine
+icrunOutp :: (Ix a, Integral a, Show a) => Intcode a -> [a]
+icrunOutp machine = outp []
+	where (_,_,_,outp,_) = icrun machine
 
 tests :: IO ()
 tests = do

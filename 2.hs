@@ -13,7 +13,7 @@ getInput = do
 	return $ readProg dat
 
 tryVals :: IntcodeMem Val -> Val -> Val -> Val
-tryVals prog a b = let (_, result, _, _, _) = icrun (0, prog // [(1, a), (2, b)], [], id, 0) in result ! 0
+tryVals prog a b = (!0) $ icrunMem $ icinit (prog // [(1, a), (2, b)])
 
 testVals :: IntcodeMem Val -> Val -> Val -> Val -> IO ()
 testVals prog a b target = do

@@ -12,15 +12,14 @@ runProgsA :: IntcodeMem Integer -> [Integer] -> Integer -> Integer
 runProgsA _ [] val = val
 runProgsA prog (arg:rest) val = runProgsA prog rest val'
 	where
-		(_, _, _, outp, _) = icrun (0, prog, [arg, val], id, 0)
-		[val'] = outp []
+		[val'] = icrunOutp $ icinitInp prog [arg, val]
 
 runProgsB :: IntcodeMem Integer -> [Integer] -> Integer -> Integer
 runProgsB prog args init = last $ outputs !! (num - 1)
 	where
 		num = length args
-		machines = [ (0, prog, (arg:) $ (if n == 0 then (init:) else id) $ outputs !! ((n - 1) `mod` num), id, 0) | (n, arg) <- enumerate args ]
-		outputs = [ (\(_, _, _, outp, _) -> outp []) $ icrun machine | machine <- machines ]
+		machines = [ icinitInp prog ((arg:) $ (if n == 0 then (init:) else id) $ outputs !! ((n - 1) `mod` num)) | (n, arg) <- enumerate args ]
+		outputs = [ icrunOutp machine | machine <- machines ]
 
 maximiseRun worker prog range = maximumBy (compare `on` snd) $ map (\x -> (x, worker prog x 0)) $ permutations range
 maximiseRunA prog = maximiseRun runProgsA prog [0..4]
