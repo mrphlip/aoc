@@ -7,3 +7,5 @@ I use these types of challenges as an excuse to learn (or brush up on) programmi
 So don't expect this code to be particularly efficient, clean, or idiomatic.
 
 But, it works.
+
+For each puzzle, eg `1.hs` is my code, and `1.txt` is my version of the data file from AOC. `1.md` is my comments on the puzzle, and my solution for it. Some common code between the puzzles has been collected in `Intcode.hs` and `Utils.hs`.
