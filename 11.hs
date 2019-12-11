@@ -14,7 +14,8 @@ data Rotation = TurnLeft | TurnRight deriving (Eq, Show, Read)
 type Point = (Integer, Integer)
 data Colour = DefBlack | Black | White deriving (Eq, Show, Read)
 type AntState = (Direction, Point, Array Point Colour)
-initstate = (UpDir, (0,0), listArray ((0,0),(0,0)) [DefBlack])
+
+makeInitstate col = (UpDir, (0,0), listArray ((0,0),(0,0)) [col])
 
 step :: Direction -> Point -> Point
 step LeftDir (x, y) = (x-1, y)
@@ -49,8 +50,8 @@ antstep_ (dir, pos, arr) rot col = ((dir', pos', arr'), getExpand pos' DefBlack 
 		dir' = rotate rot dir
 		pos' = step dir' pos
 
-makeinputs :: [Integer] -> ([Integer], AntState)
-makeinputs outp = (0 : map fst results, snd $ last results)
+makeinputs :: AntState -> [Integer] -> ([Integer], AntState)
+makeinputs initstate@(_,_,arr) outp = (writeColour (arr ! (0,0)) : map fst results, snd $ last results)
 	where
 		iterfunc :: AntState -> [Integer] -> [(Integer, AntState)]
 		iterfunc _ [] = []
@@ -59,11 +60,11 @@ makeinputs outp = (0 : map fst results, snd $ last results)
 		results :: [(Integer, AntState)]
 		results = iterfunc initstate outp
 
-runprog :: IntcodeMem Integer -> AntState
-runprog code = finalstate
+runprog :: AntState -> IntcodeMem Integer -> AntState
+runprog initstate code = finalstate
 	where
 		outputs = icrunOutp $ icinitInp code inputs
-		(inputs, finalstate) = makeinputs outputs
+		(inputs, finalstate) = makeinputs initstate outputs
 
 showstate :: AntState -> String
 showstate (_,_,arr) = unlines rows
@@ -73,7 +74,7 @@ showstate (_,_,arr) = unlines rows
 		row y = [ cell x y | x <- [ax..bx] ]
 		cell x y = showColour $ arr ! (x,y)
 		showColour DefBlack = ' '
-		showColour Black = '.'
+		showColour Black = ' '
 		showColour White = '#'
 
 countstate :: AntState -> Integer
@@ -82,7 +83,8 @@ countstate (_,_,arr) = genericLength $ filter (/=DefBlack) $ elems arr
 main :: IO ()
 main = do
 	code <- getInput
-	let finalstate = runprog code
-	print $ bounds $ (\(_,_,x)->x) finalstate
-	putStrLn $ showstate finalstate
-	print $ countstate finalstate
+	let finalstateA = runprog (makeInitstate DefBlack) code
+	putStrLn $ showstate finalstateA
+	print $ countstate finalstateA
+	let finalstateB = runprog (makeInitstate White) code
+	putStrLn $ showstate finalstateB
