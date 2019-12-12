@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-tabs #-}
 import Data.List
 import Data.Set as S
 import Utils

@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-tabs #-}
 import Data.Map.Strict as M
 import Data.Set as S
 import Data.List

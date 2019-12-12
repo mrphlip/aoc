@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-tabs #-}
 module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, setExpand, ExpandIx, test) where
 
 import Data.Array

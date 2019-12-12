@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-tabs #-}
 module Vector (Vector(..), Vector2(Vector2), Vector3(Vector3), crossProduct, tupleVec2, tupleVec3, vecTuple2, vecTuple3, vecSum) where
 
 import Data.List

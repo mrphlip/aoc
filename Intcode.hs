@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-tabs #-}
 module Intcode (IntcodeMem, Intcode, icinit, icinitInp, icstep, icrun, icrunMem, icrunOutp, readProg) where
 
 import Data.Array

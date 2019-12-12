@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-tabs #-}
 import Data.Char
 import Data.List
 import Control.Exception
