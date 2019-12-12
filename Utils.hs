@@ -1,7 +1,8 @@
-module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, setExpand, ExpandIx) where
+module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, setExpand, ExpandIx, test) where
 
 import Data.Array
 import Data.List
+import Control.Exception
 
 -- Not entirely sure why this isn't a builtin...
 split :: Char -> String -> [String]
@@ -57,3 +58,6 @@ instance (ExpandIx a, ExpandIx b) => ExpandIx (a, b) where
 		where
 			(ax', bx') = expandBounds (ax,bx) x
 			(ay', by') = expandBounds (ay,by) y
+
+test :: Bool -> IO ()
+test val = assert val $ return ()
