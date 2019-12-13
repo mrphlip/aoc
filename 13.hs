@@ -51,16 +51,6 @@ finalScore outp = iterfunc outp 0
 		iterfunc (-1:0:score':rest) _ = iterfunc rest score'
 		iterfunc (_:_:_:rest) score = iterfunc rest score
 
-patchLoc = 75
-thunkLoc = 10000
-relocSize = 6
-patchCode code = setExpand (thunkLoc + relocSize + 5) 0 0 code // patches
-	where
-		patches = join [patchMain, patchThunk, patchRelocate]
-		patchMain = [(patchLoc, 1106), (patchLoc + 1, 0), (patchLoc + 2, thunkLoc)]
-		patchThunk = [(thunkLoc, 104), (thunkLoc + 1, -2), (thunkLoc + relocSize + 2, 1106), (thunkLoc + relocSize + 3, 0), (thunkLoc + relocSize + 4, patchLoc + relocSize)]
-		patchRelocate = [(thunkLoc + 2 + ix, code ! (patchLoc + ix)) | ix <- [0..relocSize-1]]
-
 genInputs outp = iterfunc outp 0 0
 	where
 		iterfunc [] _ _ = []
@@ -77,7 +67,7 @@ genInputs outp = iterfunc outp 0 0
 playGame code = outp
 	where
 		inp = genInputs outp
-		outp = icrunOutp $ icinitInp code inp
+		outp = icrunOutp $ icinitInpFlag code inp (-2)
 
 frameDelay = 10000 -- microseconds
 animScreen outp = do
@@ -105,7 +95,7 @@ animScreen outp = do
 
 main :: IO ()
 main = do
-	code <- patchCode <$> getInput
+	code <- getInput
 	let outp = icrunOutp $ icinitInp code []
 	let screen = drawScreen outp
 	--putStrLn $ showScreen screen

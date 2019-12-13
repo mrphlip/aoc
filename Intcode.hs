@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Intcode (IntcodeMem, Intcode, icinit, icinitInp, icstep, icrun, icrunMem, icrunOutp, readProg) where
+module Intcode (IntcodeMem, Intcode, icinit, icinitInp, icinitInpFlag, icstep, icrun, icrunMem, icrunOutp, readProg) where
 
 import Data.Array
 import Data.List
@@ -11,32 +11,35 @@ import Debug.Trace
 import Utils
 
 type IntcodeMem a = Array a a
-type Intcode a = (a, IntcodeMem a, [a], a) -- (IP, Memory, Input, Base)
+type Intcode a = (a, IntcodeMem a, [a], a, Maybe a) -- (IP, Memory, Input, Base, reading input flag)
 
 readProg :: (Ix a, Num a, Read a) => String -> IntcodeMem a
 readProg s = listArrayLen $ map read $ split ',' $ takeWhile (/='\n') s
 
 icinit :: (Ix a, Num a) => IntcodeMem a -> Intcode a
-icinit prog = (0, prog, [], 0)
+icinit prog = (0, prog, [], 0, Nothing)
 
 icinitInp :: (Ix a, Num a) => IntcodeMem a -> [a] -> Intcode a
-icinitInp prog inp = (0, prog, inp, 0)
+icinitInp prog inp = (0, prog, inp, 0, Nothing)
+
+icinitInpFlag :: (Ix a, Num a) => IntcodeMem a -> [a] -> a -> Intcode a
+icinitInpFlag prog inp flag = (0, prog, inp, 0, Just flag)
 
 icstep :: (ExpandIx a, Integral a, Show a) => Intcode a -> Maybe ((Intcode a), Maybe a)
---icstep (ip, mem, inp, base) = traceShow (ip, [mem ! x | x <- [ip..min (ip+3) (snd $ bounds mem)]], base) $ icstep_ (ip, mem, inp, base)
+--icstep (ip, mem, inp, base, flag) = traceShow (ip, [mem ! x | x <- [ip..min (ip+3) (snd $ bounds mem)]], base) $ icstep_ (ip, mem, inp, base, flag)
 icstep = icstep_
 
 icstep_ :: (ExpandIx a, Integral a, Show a) => Intcode a -> Maybe ((Intcode a), Maybe a)
-icstep_ (ip, mem, inp, base)
-	| opcode == 1 = Just ((ip + 4, setop 3 (val1 + val2), inp, base), Nothing)  -- Add
-	| opcode == 2 = Just ((ip + 4, setop 3 (val1 * val2), inp, base), Nothing)  -- Multiply
-	| opcode == 3 = Just ((ip + 2, setop 1 (head inp), tail inp, base), Nothing)  -- Input
-	| opcode == 4 = Just ((ip + 2, mem, inp, base), Just val1)  -- Output
-	| opcode == 5 = Just ((if val1 /= 0 then val2 else ip + 3, mem, inp, base), Nothing)  -- JNZ
-	| opcode == 6 = Just ((if val1 == 0 then val2 else ip + 3, mem, inp, base), Nothing)  -- JZ
-	| opcode == 7 = Just ((ip + 4, setop 3 (if val1 < val2 then 1 else 0), inp, base), Nothing)  -- less-than
-	| opcode == 8 = Just ((ip + 4, setop 3 (if val1 == val2 then 1 else 0), inp, base), Nothing)  -- equal-to
-	| opcode == 9 = Just ((ip + 2, mem, inp, base + val1), Nothing)  -- Adjust base
+icstep_ (ip, mem, inp, base, flag)
+	| opcode == 1 = Just ((ip + 4, setop 3 (val1 + val2), inp, base, flag), Nothing)  -- Add
+	| opcode == 2 = Just ((ip + 4, setop 3 (val1 * val2), inp, base, flag), Nothing)  -- Multiply
+	| opcode == 3 = Just ((ip + 2, setop 1 (head inp), tail inp, base, flag), flag)  -- Input
+	| opcode == 4 = Just ((ip + 2, mem, inp, base, flag), Just val1)  -- Output
+	| opcode == 5 = Just ((if val1 /= 0 then val2 else ip + 3, mem, inp, base, flag), Nothing)  -- JNZ
+	| opcode == 6 = Just ((if val1 == 0 then val2 else ip + 3, mem, inp, base, flag), Nothing)  -- JZ
+	| opcode == 7 = Just ((ip + 4, setop 3 (if val1 < val2 then 1 else 0), inp, base, flag), Nothing)  -- less-than
+	| opcode == 8 = Just ((ip + 4, setop 3 (if val1 == val2 then 1 else 0), inp, base, flag), Nothing)  -- equal-to
+	| opcode == 9 = Just ((ip + 2, mem, inp, base + val1, flag), Nothing)  -- Adjust base
 	| opcode == 99 = Nothing
 	where
 		instr = getval ip
@@ -69,7 +72,7 @@ icrun state = result
 
 icrunMem :: (ExpandIx a, Integral a, Show a) => Intcode a -> IntcodeMem a
 icrunMem machine = mem
-	where ((_,mem,_,_),_) = icrun machine
+	where ((_,mem,_,_,_),_) = icrun machine
 icrunOutp :: (ExpandIx a, Integral a, Show a) => Intcode a -> [a]
 icrunOutp machine = outp
 	where (_,outp) = icrun machine
@@ -131,7 +134,7 @@ tests = do
 		checkProg :: [Integer] -> [Integer] -> Integer -> [Integer] -> [Integer] -> IO ()
 		checkProg code inp  expip expmem expoutp = do
 			--print code
-			let ((ip, mem, inpleft, base), outp) = icrun (0, listArrayLen code, inp, 0)
+			let ((ip, mem, inpleft, _, _), outp) = icrun $ icinitInp (listArrayLen code) inp
 			check $ ip == expip
 			check $ null expmem || elems mem == expmem
 			check $ null inpleft
