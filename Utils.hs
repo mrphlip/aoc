@@ -1,9 +1,10 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, setExpand, ExpandIx, test) where
+module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, setExpand, ExpandIx, test, unfoldr1) where
 
 import Data.Array
 import Data.List
 import Control.Exception
+import Control.Monad
 
 -- Not entirely sure why this isn't a builtin...
 split :: Char -> String -> [String]
@@ -62,3 +63,6 @@ instance (ExpandIx a, ExpandIx b) => ExpandIx (a, b) where
 
 test :: Bool -> IO ()
 test val = assert val $ return ()
+
+unfoldr1 :: (a -> Maybe a) -> a -> [a]
+unfoldr1 f = unfoldr (liftM (\x->(x,x)) . f)
