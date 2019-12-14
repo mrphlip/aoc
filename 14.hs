@@ -20,19 +20,21 @@ parseInput = map parseInputLine . filter (not . null) . lines
 
 -- I really should invest in learning a proper parser
 parseInputLine :: String -> Production
-parseInputLine line = fst $ head $ readsLine line
+parseInputLine line = fst $ head $ filter (null.snd) $ readsLine line
 	where
 		lstrip = dropWhile (==' ')
-		readWord "" = ("", "")
-		readWord (c:xs)
-			| (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') = let (w,rest) = readWord xs in (c:w, rest)
-			| otherwise = ("", c:xs)
+		isletter c = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
+		readToken :: String -> ReadS ()
+		readToken token s = do
+			let (top, rest) = splitAt (length token) s
+			guard $ top == token
+			return ((), rest)
 		readsInt = reads :: ReadS Integer
 		readsName :: ReadS String
 		readsName s = do
 			let s' = lstrip s
 			guard $ not $ null s'
-			let (name, rest) = readWord s'
+			let (name, rest) = span isletter s'
 			guard $ not $ null name
 			return (name, rest)
 		readsItem :: ReadS Item
@@ -53,10 +55,9 @@ parseInputLine line = fst $ head $ readsLine line
 		readsLine s = do
 			(reagents, s') <- readsItems s
 			let s'' = lstrip s'
-			guard $ head s'' == '=' && head (tail s'') == '>'
-			(products, s''') <- readsItems $ tail $ tail s''
-			guard $ null $ lstrip s'''
-			return ((reagents, products), "")
+			(_, s''') <- readToken "=>" s''
+			(products, s'''') <- readsItems s'''
+			return ((reagents, products), lstrip s'''')
 
 showLine :: Production -> String
 showLine (reagents, productions) = intercalate ", " (map showItem reagents) ++ " => " ++ intercalate ", " (map showItem productions)
