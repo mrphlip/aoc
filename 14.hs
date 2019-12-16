@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
 import qualified Data.Map.Strict as M
+import qualified Text.ParserCombinators.ReadP as P
 import Data.List
 import Data.Maybe
 import Control.Monad
@@ -18,46 +19,32 @@ readInput = do
 parseInput :: String -> [Production]
 parseInput = map parseInputLine . filter (not . null) . lines
 
--- I really should invest in learning a proper parser
 parseInputLine :: String -> Production
-parseInputLine line = fst $ head $ filter (null.snd) $ readsLine line
+parseInputLine line = fst $ head $ filter (null.snd) $ P.readP_to_S readLine line
 	where
-		lstrip = dropWhile (==' ')
+		readLine :: P.ReadP Production
+		readLine = do
+			reagents <- readItems
+			P.skipSpaces
+			P.string "=>"
+			products <- readItems
+			P.skipSpaces
+			return (reagents, products)
+		readInt = P.readS_to_P reads :: P.ReadP Integer
 		isletter c = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
-		readToken :: String -> ReadS ()
-		readToken token s = do
-			let (top, rest) = splitAt (length token) s
-			guard $ top == token
-			return ((), rest)
-		readsInt = reads :: ReadS Integer
-		readsName :: ReadS String
-		readsName s = do
-			let s' = lstrip s
-			guard $ not $ null s'
-			let (name, rest) = span isletter s'
-			guard $ not $ null name
-			return (name, rest)
-		readsItem :: ReadS Item
-		readsItem s = do
-			(count, s') <- readsInt s
-			(name, s'') <- readsName s'
-			return ((name, count), s'')
-		readsItems :: ReadS [Item]
-		readsItems s = do
-			(item, s') <- readsItem s
-			let s'' = lstrip s'
-			case listToMaybe s'' of
-				Just ',' -> do
-					(rest, s''') <- readsItems $ tail s''
-					return (item:rest, s''')
-				_ -> return ([item], s'')
-		readsLine :: ReadS Production
-		readsLine s = do
-			(reagents, s') <- readsItems s
-			let s'' = lstrip s'
-			(_, s''') <- readToken "=>" s''
-			(products, s'''') <- readsItems s'''
-			return ((reagents, products), lstrip s'''')
+		readName = P.skipSpaces >> P.munch isletter :: P.ReadP String
+		readItem :: P.ReadP Item
+		readItem = do
+			count <- readInt
+			name <- readName
+			return (name, count)
+		readItems :: P.ReadP [Item]
+		readItems = fmap return readItem P.+++ do
+			itemFirst <- readItem
+			P.skipSpaces
+			P.char ','
+			itemRest <- readItems
+			return $ itemFirst : itemRest
 
 showLine :: Production -> String
 showLine (reagents, productions) = intercalate ", " (map showItem reagents) ++ " => " ++ intercalate ", " (map showItem productions)
