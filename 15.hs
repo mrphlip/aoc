@@ -36,15 +36,15 @@ step UpDir (x, y) = (x, y-1)
 step DownDir (x, y) = (x, y+1)
 
 type DistMap = Array Point (Maybe (Integer, Direction))
-findNearest :: Cell -> State -> [Direction]
-findNearest target (maze, startat) = reverse $ tracePoint targetLoc
+findNearest :: Cell -> State -> Maybe [Direction]
+findNearest target (maze, startat) = result
 	where
 		expbounds = let ((minx, miny), (maxx, maxy)) = bounds maze in ((minx-1, miny-1), (maxx+1, maxy+1))
 		initdistmap :: DistMap
 		initdistmap = listArray expbounds (repeat Nothing) // [ (startat, Just (0, UpDir)) ]
 		-- Dijkstra-ish algorithm
-		iterfunc :: DistMap -> (DistMap, Point)
-		iterfunc distmap = if shouldStop then error "No route found" else continue
+		iterfunc :: DistMap -> Maybe (DistMap, Point)
+		iterfunc distmap = if shouldStop then Nothing else continue
 			where
 				points :: [(Point, Direction, Integer)]
 				points = [(step d p, d, fst $ fromJust $ distmap ! p) |
@@ -59,31 +59,35 @@ findNearest target (maze, startat) = reverse $ tracePoint targetLoc
 				newMap = distmap // [ (p, Just (closestDist + 1, d)) | (p,d,_) <- points ]
 				targetPoints = [ p | x@(p,_,_) <- filtPoints, getExpand p Unknown maze == target ]
 				continue = case targetPoints of
-					(p:_) -> (newMap, p)
+					(p:_) -> Just (newMap, p)
 					_ -> iterfunc newMap
-		(finalMap, targetLoc) = iterfunc initdistmap
-		tracePoint p
+		tracePoint finalMap p
 			| dist == 0 = []
-			| otherwise = dir : tracePoint (step (reverseDirection dir) p)
+			| otherwise = dir : tracePoint finalMap (step (reverseDirection dir) p)
 			where Just (dist,dir) = finalMap ! p
+		result = case iterfunc initdistmap of
+			Just (finalMap, targetLoc) -> Just $ reverse $ tracePoint finalMap targetLoc
+			Nothing -> Nothing
 
-makeInputs :: [Integer] -> ([Integer], State)
+makeInputs :: [Integer] -> ([Integer], Maze)
 makeInputs outp = iterfunc (listArray ((0,0),(0,0)) [Floor], (0,0)) outp
 	where
-		iterfunc (maze, loc) outp = (map writeDirection route ++ continue, finalstate)
+		iterfunc (maze, loc) outp = result
 			where
-				route = trace ("===\n" ++ showMaze maze) $ traceShow loc $ findNearest Unknown (maze, loc)
+				maybeRoute = findNearest Unknown (maze, loc)
+				route = fromJust maybeRoute
 				(walkTo, testTo) = foldl (\(_, p) d -> (p, step d p)) (undefined,loc) route
-				(walk, final:rest) = traceShow route $ genericSplitAt (genericLength route - 1) outp
-				(continue, finalstate) = case traceShow (walk, final) $ assert (all (==1) walk) $ final of
+				(walk, final:rest) = genericSplitAt (genericLength route - 1) outp
+				(continue, finalstate) = case assert (all (==1) walk) $ final of
 					0 -> iterfunc (setExpand testTo Wall Unknown maze, walkTo) rest
 					1 -> iterfunc (setExpand testTo Floor Unknown maze, testTo) rest
-					2 -> ([], (setExpand testTo Target Unknown maze, testTo))
-runprog :: IntcodeMem Integer -> State
-runprog prog = finalstate
+					2 -> iterfunc (setExpand testTo Target Unknown maze, testTo) rest
+				result = if isNothing maybeRoute then ([], maze) else (map writeDirection route ++ continue, finalstate)
+runprog :: IntcodeMem Integer -> Maze
+runprog prog = maze
 	where
 		outputs = icrunOutp $ icinitInp prog inputs
-		(inputs, finalstate) = makeInputs outputs
+		(inputs, maze) = makeInputs outputs
 
 showMaze :: Maze -> String
 showMaze maze = unlines $ rows
@@ -104,20 +108,23 @@ tests = do
 		Wall,Wall,Wall,Wall,Wall,Wall,Wall,Wall,Wall,Wall,
 		Target,Floor,Floor,Floor,Floor,Floor,Floor,Floor,Floor,Floor,
 		Wall,Wall,Wall,Wall,Wall,Wall,Unknown,Wall,Wall,Wall]
-	test $ findNearest Unknown (maze, (1,2)) == [UpDir, UpDir, UpDir]
-	test $ findNearest Unknown (maze, (1,4)) == [DownDir, DownDir, RightDir]
-	test $ findNearest Unknown (maze, (1,7)) == [UpDir, RightDir]
-	test $ findNearest Unknown (maze, (1,8)) == [DownDir, DownDir]
-	test $ findNearest Target (maze, (1,2)) == [UpDir, UpDir]
-	test $ findNearest Target (maze, (1,4)) == [UpDir, UpDir, UpDir, UpDir]
-	test $ findNearest Target (maze, (1,7)) == [UpDir, UpDir, UpDir, UpDir, UpDir, UpDir, UpDir]
-	test $ findNearest Target (maze, (1,8)) == [UpDir, UpDir, UpDir, UpDir, UpDir, UpDir, UpDir, UpDir]
+	test $ findNearest Unknown (maze, (1,2)) == Just [UpDir, UpDir, UpDir]
+	test $ findNearest Unknown (maze, (1,4)) == Just [DownDir, DownDir, RightDir]
+	test $ findNearest Unknown (maze, (1,7)) == Just [UpDir, RightDir]
+	test $ findNearest Unknown (maze, (1,8)) == Just [DownDir, DownDir]
+	test $ findNearest Target (maze, (1,2)) == Just [UpDir, UpDir]
+	test $ findNearest Target (maze, (1,4)) == Just [UpDir, UpDir, UpDir, UpDir]
+	test $ findNearest Target (maze, (1,7)) == Just [UpDir, UpDir, UpDir, UpDir, UpDir, UpDir, UpDir]
+	test $ findNearest Target (maze, (1,8)) == Just [UpDir, UpDir, UpDir, UpDir, UpDir, UpDir, UpDir, UpDir]
+
+	let maze2 = listArray ((0,0),(2,2)) [Wall,Wall,Wall,Wall,Floor,Wall,Wall,Wall,Wall]
+	test $ findNearest Unknown (maze, (1,1)) == Nothing
 
 main :: IO ()
 main = do
 	prog <- getInput
-	let (maze, target) = runprog prog
-	--putStrLn $ showMaze maze
+	let maze = runprog prog
+	putStrLn $ showMaze maze
 	let route = findNearest Target (maze, (0,0))
 	print route
-	print $ length route
+	print $ length $ fromJust route
