@@ -36,15 +36,21 @@ step UpDir (x, y) = (x, y-1)
 step DownDir (x, y) = (x, y+1)
 
 type DistMap = Array Point (Maybe (Integer, Direction))
-findNearest :: Cell -> State -> Maybe [Direction]
-findNearest target (maze, startat) = result
+buildDistMap :: Maybe Cell -> State -> (DistMap, Maybe Point)
+buildDistMap maybeTarget (maze, startat) = iterfunc initdistmap
+	-- buildDistMap Nothing state -> a full distance map of the entire maze
+	-- buildDistMap (Just x) state -> an abbreviated distance map of the maze,
+	--   enough to find the closest "x", plus the location of the closest "x"
 	where
+		allowed
+			| isJust maybeTarget = [Floor,Target,fromJust maybeTarget]
+			| isNothing maybeTarget = [Floor,Target]
 		expbounds = let ((minx, miny), (maxx, maxy)) = bounds maze in ((minx-1, miny-1), (maxx+1, maxy+1))
 		initdistmap :: DistMap
 		initdistmap = listArray expbounds (repeat Nothing) // [ (startat, Just (0, UpDir)) ]
 		-- Dijkstra-ish algorithm
-		iterfunc :: DistMap -> Maybe (DistMap, Point)
-		iterfunc distmap = if shouldStop then Nothing else continue
+		iterfunc :: DistMap -> (DistMap, Maybe Point)
+		iterfunc distmap = if shouldStop then (distmap, Nothing) else continue
 			where
 				points :: [(Point, Direction, Integer)]
 				points = [(step d p, d, fst $ fromJust $ distmap ! p) |
@@ -52,22 +58,26 @@ findNearest target (maze, startat) = result
 					d <- directions,
 					isJust $ distmap ! p,
 					isNothing $ distmap ! step d p,
-					getExpand (step d p) Unknown maze `elem` [Floor,Target,target] ]
+					getExpand (step d p) Unknown maze `elem` allowed ]
 				shouldStop = null points
 				closestDist = minimum [ i | (_,_,i) <- points ]
 				filtPoints = [ x | x@(_,_,i) <- points, i == closestDist ]
 				newMap = distmap // [ (p, Just (closestDist + 1, d)) | (p,d,_) <- points ]
-				targetPoints = [ p | x@(p,_,_) <- filtPoints, getExpand p Unknown maze == target ]
+				targetPoints = [ p | x@(p,_,_) <- filtPoints, Just (getExpand p Unknown maze) == maybeTarget ]
 				continue = case targetPoints of
-					(p:_) -> Just (newMap, p)
+					(p:_) -> (newMap, Just p)
 					_ -> iterfunc newMap
+
+findNearest :: Cell -> State -> Maybe [Direction]
+findNearest target state = result
+	where
+		result = case buildDistMap (Just target) state of
+			(finalMap, Just targetLoc) -> Just $ reverse $ tracePoint finalMap targetLoc
+			(_, Nothing) -> Nothing
 		tracePoint finalMap p
 			| dist == 0 = []
 			| otherwise = dir : tracePoint finalMap (step (reverseDirection dir) p)
 			where Just (dist,dir) = finalMap ! p
-		result = case iterfunc initdistmap of
-			Just (finalMap, targetLoc) -> Just $ reverse $ tracePoint finalMap targetLoc
-			Nothing -> Nothing
 
 makeInputs :: [Integer] -> ([Integer], Maze)
 makeInputs outp = iterfunc (listArray ((0,0),(0,0)) [Floor], (0,0)) outp
@@ -128,3 +138,9 @@ main = do
 	let route = findNearest Target (maze, (0,0))
 	print route
 	print $ length $ fromJust route
+
+	let targetLoc = foldl (flip step) (0,0) $ fromJust route
+	print targetLoc
+	let (distmap, _) = buildDistMap Nothing (maze, targetLoc)
+	let maxDist = maximum $ map fst $ catMaybes $ elems distmap
+	print maxDist
