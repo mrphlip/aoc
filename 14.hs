@@ -39,12 +39,7 @@ parseInputLine line = fst $ head $ filter (null.snd) $ P.readP_to_S readLine lin
 			name <- readName
 			return (name, count)
 		readItems :: P.ReadP [Item]
-		readItems = fmap return readItem P.+++ do
-			itemFirst <- readItem
-			P.skipSpaces
-			P.char ','
-			itemRest <- readItems
-			return $ itemFirst : itemRest
+		readItems = P.sepBy1 readItem $ P.skipSpaces >> P.char ','
 
 showLine :: Production -> String
 showLine (reagents, productions) = intercalate ", " (map showItem reagents) ++ " => " ++ intercalate ", " (map showItem productions)
