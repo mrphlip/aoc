@@ -88,7 +88,7 @@ makeInputs outp = iterfunc (listArray ((0,0),(0,0)) [Floor], (0,0)) outp
 				route = fromJust maybeRoute
 				(walkTo, testTo) = foldl (\(_, p) d -> (p, step d p)) (undefined,loc) route
 				(walk, final:rest) = genericSplitAt (genericLength route - 1) outp
-				(continue, finalstate) = case assert (all (==1) walk) $ final of
+				(continue, finalstate) = case assert (all (/=0) walk) $ final of
 					0 -> iterfunc (setExpand testTo Wall Unknown maze, walkTo) rest
 					1 -> iterfunc (setExpand testTo Floor Unknown maze, testTo) rest
 					2 -> iterfunc (setExpand testTo Target Unknown maze, testTo) rest
