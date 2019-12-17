@@ -22,6 +22,7 @@ clean:
 12: 12.hs Utils.hs
 13: 13.hs Utils.hs Intcode.hs
 14: 14.hs Utils.hs
-15: 15.hs Utils.hs Intcode.hs
+15: 15.hs Utils.hs Intcode.hs Direction.hs
 16: 16.hs Utils.hs
 	ghc -threaded -with-rtsopts="-N" -o $@ $<
+17: 17.hs Utils.hs Intcode.hs Direction.hs

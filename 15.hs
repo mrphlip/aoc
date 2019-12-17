@@ -6,11 +6,10 @@ import Data.Maybe
 import Control.Exception
 import Intcode
 import Utils
+import Direction
 import Debug.Trace
 
 data Cell = Unknown | Floor | Wall | Target deriving (Eq, Show, Read)
-data Direction = LeftDir | RightDir | UpDir | DownDir deriving (Eq, Show, Read)
-directions = [LeftDir, RightDir, UpDir, DownDir]
 type Point = (Integer, Integer)
 type Maze = Array Point Cell
 type State = (Maze, Point)
@@ -24,16 +23,6 @@ writeDirection UpDir = 1
 writeDirection DownDir = 2
 writeDirection LeftDir = 3
 writeDirection RightDir = 4
-reverseDirection UpDir = DownDir
-reverseDirection DownDir = UpDir
-reverseDirection LeftDir = RightDir
-reverseDirection RightDir = LeftDir
-
-step :: Direction -> Point -> Point
-step LeftDir (x, y) = (x-1, y)
-step RightDir (x, y) = (x+1, y)
-step UpDir (x, y) = (x, y-1)
-step DownDir (x, y) = (x, y+1)
 
 type DistMap = Array Point (Maybe (Integer, Direction))
 buildDistMap :: Maybe Cell -> State -> (DistMap, Maybe Point)
