@@ -31,7 +31,7 @@ makeInputs outp = iterfunc (listArray ((0,0),(0,0)) [Floor], (0,0)) outp
 		iterfunc (maze, loc) outp = result
 			where
 				maybeRoute = findNearestSquareExpand maze loc [Floor, Target, Unknown] [Unknown] 1 Unknown
-				route = fromJust maybeRoute
+				(route, _) = fromJust maybeRoute
 				(walkTo, testTo) = foldl (\(_, p) d -> (p, step d p)) (undefined,loc) route
 				(walk, final:rest) = genericSplitAt (genericLength route - 1) outp
 				(continue, finalstate) = case assert (all (/=0) walk) $ final of
@@ -64,14 +64,14 @@ tests = do
 		Wall,Wall,Wall,Wall,Wall,Wall,Wall,Wall,Wall,Wall,
 		Target,Floor,Floor,Floor,Floor,Floor,Floor,Floor,Floor,Floor,
 		Wall,Wall,Wall,Wall,Wall,Wall,Unknown,Wall,Wall,Wall]
-	test $ findNearestSquareExpand maze (1,2) [Floor, Target, Unknown] [Unknown] 1 Unknown == Just [UpDir, UpDir, UpDir]
-	test $ findNearestSquareExpand maze (1,4) [Floor, Target, Unknown] [Unknown] 1 Unknown == Just [DownDir, DownDir, RightDir]
-	test $ findNearestSquareExpand maze (1,7) [Floor, Target, Unknown] [Unknown] 1 Unknown == Just [UpDir, RightDir]
-	test $ findNearestSquareExpand maze (1,8) [Floor, Target, Unknown] [Unknown] 1 Unknown == Just [DownDir, DownDir]
-	test $ findNearestSquareExpand maze (1,2) [Floor, Target] [Target] 1 Unknown == Just [UpDir, UpDir]
-	test $ findNearestSquareExpand maze (1,4) [Floor, Target] [Target] 1 Unknown == Just [UpDir, UpDir, UpDir, UpDir]
-	test $ findNearestSquareExpand maze (1,7) [Floor, Target] [Target] 1 Unknown == Just [UpDir, UpDir, UpDir, UpDir, UpDir, UpDir, UpDir]
-	test $ findNearestSquareExpand maze (1,8) [Floor, Target] [Target] 1 Unknown == Just [UpDir, UpDir, UpDir, UpDir, UpDir, UpDir, UpDir, UpDir]
+	test $ findNearestSquareExpand maze (1,2) [Floor, Target, Unknown] [Unknown] 1 Unknown == Just ([UpDir, UpDir, UpDir], 3)
+	test $ findNearestSquareExpand maze (1,4) [Floor, Target, Unknown] [Unknown] 1 Unknown == Just ([DownDir, DownDir, RightDir], 3)
+	test $ findNearestSquareExpand maze (1,7) [Floor, Target, Unknown] [Unknown] 1 Unknown == Just ([UpDir, RightDir], 2)
+	test $ findNearestSquareExpand maze (1,8) [Floor, Target, Unknown] [Unknown] 1 Unknown == Just ([DownDir, DownDir], 2)
+	test $ findNearestSquareExpand maze (1,2) [Floor, Target] [Target] 1 Unknown == Just ([UpDir, UpDir], 2)
+	test $ findNearestSquareExpand maze (1,4) [Floor, Target] [Target] 1 Unknown == Just ([UpDir, UpDir, UpDir, UpDir], 4)
+	test $ findNearestSquareExpand maze (1,7) [Floor, Target] [Target] 1 Unknown == Just ([UpDir, UpDir, UpDir, UpDir, UpDir, UpDir, UpDir], 7)
+	test $ findNearestSquareExpand maze (1,8) [Floor, Target] [Target] 1 Unknown == Just ([UpDir, UpDir, UpDir, UpDir, UpDir, UpDir, UpDir, UpDir], 8)
 
 	let maze2 = listArray ((0,0),(2,2)) [Wall,Wall,Wall,Wall,Floor,Wall,Wall,Wall,Wall]
 	test $ findNearestSquareExpand maze (1,1) [Floor, Target, Unknown] [Unknown] 1 Unknown == Nothing
@@ -82,10 +82,9 @@ main = do
 	let maze = runprog prog
 	putStrLn $ showMaze maze
 	let route = findNearestSquare maze (0,0) [Floor, Target] [Target]
-	print route
-	print $ length $ fromJust route
+	print $ route
 
-	let targetLoc = foldl (flip step) (0,0) $ fromJust route
+	let targetLoc = foldl (flip step) (0,0) $ fst $ fromJust route
 	print targetLoc
 	let (distmap, _) = buildDistMapSquare maze targetLoc [Floor, Target] []
 	let maxDist = maximum $ map (\(x,_,_)->x) $ catMaybes $ elems distmap

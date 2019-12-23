@@ -30,7 +30,7 @@ buildDistMap mapbounds startnode neighbours istarget = iterfunc initdistmap
 				shouldStop = null points
 				closestDist = minimum [ n | (_,_,_,n) <- points ]
 				filtPoints = [ x | x@(_,_,_,n) <- points, n == closestDist ]
-				newMap = distmap // [ (p', Just (n, Just d, p)) | (p,p',d,n) <- points ]
+				newMap = distmap // [ (p', Just (n, Just d, p)) | (p,p',d,n) <- filtPoints ]
 				targetPoints = [ p' | (_,p',_,_) <- filtPoints, istarget p' ]
 				continue = case targetPoints of
 					(p':_) -> (newMap, Just p')
@@ -39,11 +39,11 @@ buildDistMap mapbounds startnode neighbours istarget = iterfunc initdistmap
 -- same parameters as buildDistMap
 -- returns a sequence of directions leading fromt he startnode to the target, if one is found
 -- or Nothing, if none is found
-findNearest :: (Ix i, Num n, Ord n) => (i, i) -> i -> (i -> [(i, d, n)]) -> (i -> Bool) -> Maybe [d]
+findNearest :: (Ix i, Num n, Ord n) => (i, i) -> i -> (i -> [(i, d, n)]) -> (i -> Bool) -> Maybe ([d], n)
 findNearest mapbounds startnode neighbours istarget = result
 	where
 		result = case buildDistMap mapbounds startnode neighbours istarget of
-			(finalMap, Just targetLoc) -> Just $ reverse $ tracePoint finalMap targetLoc
+			(finalMap, Just targetLoc) -> Just (reverse $ tracePoint finalMap targetLoc, (\(dist,_,_)->dist) $ fromJust $ finalMap ! targetLoc)
 			(_, Nothing) -> Nothing
 		tracePoint finalMap p
 			| isNothing dir = []
@@ -71,11 +71,11 @@ buildDistMapSquareExpand :: (Eq x) => Array (Integer, Integer) x -> (Integer, In
 buildDistMapSquareExpand maze startnode allowed target expandby expandwith = buildDistMap mapbounds startnode neighbours istarget
 	where (mapbounds, neighbours, istarget) = makeArgsSquareExpand maze allowed target expandby expandwith
 
-findNearestSquare :: (Eq x) => Array (Integer, Integer) x -> (Integer, Integer) -> [x] -> [x] -> Maybe [Direction]
+findNearestSquare :: (Eq x) => Array (Integer, Integer) x -> (Integer, Integer) -> [x] -> [x] -> Maybe ([Direction], Integer)
 findNearestSquare maze startnode allowed target = findNearest mapbounds startnode neighbours istarget
 	where (mapbounds, neighbours, istarget) = makeArgsSquare maze allowed target
 
-findNearestSquareExpand :: (Eq x) => Array (Integer, Integer) x -> (Integer, Integer) -> [x] -> [x] -> Integer -> x -> Maybe [Direction]
+findNearestSquareExpand :: (Eq x) => Array (Integer, Integer) x -> (Integer, Integer) -> [x] -> [x] -> Integer -> x -> Maybe ([Direction], Integer)
 findNearestSquareExpand maze startnode allowed target expandby expandwith = findNearest mapbounds startnode neighbours istarget
 	where (mapbounds, neighbours, istarget) = makeArgsSquareExpand maze allowed target expandby expandwith
 
