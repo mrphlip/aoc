@@ -1,4 +1,4 @@
-all: 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+all: 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 23
 
 clean:
 	rm -f [0-9] [0-9][0-9] *.hi *.o
@@ -6,7 +6,7 @@ clean:
 .PHONY: all clean
 
 %: %.hs
-	ghc -o $@ $<
+	ghc -threaded -with-rtsopts="-N" -o $@ $^
 
 1: 1.hs
 2: 2.hs Utils.hs Intcode.hs
@@ -22,7 +22,9 @@ clean:
 12: 12.hs Utils.hs
 13: 13.hs Utils.hs Intcode.hs
 14: 14.hs Utils.hs
-15: 15.hs Utils.hs Intcode.hs Direction.hs
+15: 15.hs Utils.hs Intcode.hs Direction.hs Dijkstra.hs
 16: 16.hs Utils.hs
-	ghc -threaded -with-rtsopts="-N" -o $@ $<
 17: 17.hs Utils.hs Intcode.hs Direction.hs
+18: 18.hs Utils.hs Direction.hs Dijkstra.hs
+19: 19.hs Utils.hs Intcode.hs Direction.hs
+23: 23.hs Utils.hs Intcode.hs

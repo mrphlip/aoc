@@ -99,12 +99,13 @@ fastestRoute_dijkstra (maze, startloc, keylocs, _) = findNearest bounds (0,0) ne
 		-- Be strict here to ensure that the distmap inside reachableKeys can be freed in a timely manner
 		neighbours p = let n = neighbours p in length n `seq` n
 
-keyroutes :: Maze -> Point -> M.Map Key Point -> Array (Key,Key) (Integer, S.Set Key)
-keyroutes maze startloc keylocs = routes
+keyroutes :: Maze -> Array Key Point -> M.Map Key Point -> Array (Key,Key) (Maybe (Integer, S.Set Key))
+keyroutes maze startlocs keylocs = routes
 	where
 		keycount = M.size keylocs
 		lastkey = chr (64 + keycount)
-		routesbounds = (('@', 'A'), (lastkey, lastkey))
+		(firststartloc, _) = bounds startlocs
+		routesbounds = ((firststartloc, 'A'), (lastkey, lastkey))
 
 		allowed = [Floor] ++ [Key c | c <- M.keys keylocs] ++ [Door c | c <- M.keys keylocs]
 		tracepoint distmap p = case distmap ! p of
@@ -114,20 +115,25 @@ keyroutes maze startloc keylocs = routes
 				_ -> tracepoint distmap p'
 		routesdata = startroutesdata ++ keyroutesdata
 		startroutesdata = do
+			(sk, startloc) <- assocs startlocs
 			let (distmap, _) = buildDistMapSquare maze startloc allowed []
 			(k, keyloc) <- M.assocs keylocs
 			let dist = distmap ! keyloc
-			guard $ isJust $ dist
-			let Just (d, _, _) = dist
-			return (('@', k), (d, S.fromList $ tracepoint distmap keyloc))
+			if isJust dist
+				then do
+					let Just (d, _, _) = dist
+					return ((sk, k), Just (d, S.fromList $ tracepoint distmap keyloc))
+				else return ((sk, k), Nothing)
 		keyroutesdata = do
 			(k1, keyloc1) <- M.assocs keylocs
 			let (distmap, _) = buildDistMapSquare maze keyloc1 allowed []
 			(k2, keyloc2) <- M.assocs keylocs
 			let dist = distmap ! keyloc2
-			guard $ isJust $ dist
-			let Just (d, _, _) = dist
-			return ((k1, k2), (d, S.fromList $ tracepoint distmap keyloc2))
+			if isJust dist
+				then do
+					let Just (d, _, _) = dist
+					return ((k1, k2), Just (d, S.fromList $ tracepoint distmap keyloc2))
+				else return ((k1, k2), Nothing)
 		routes = array routesbounds routesdata
 
 -- brute force again, but precalculate the best route from each key to each key, and which doors the route passes through
@@ -135,14 +141,17 @@ keyroutes maze startloc keylocs = routes
 fastestRoute_tree :: State -> Maybe ([Key], Integer)
 fastestRoute_tree (maze, startloc, keylocs, keyset) = fastest '@' keyset
 	where
-		routes = keyroutes maze startloc keylocs
+		startlocs = listArray ('@','@') [startloc]
+		routes = keyroutes maze startlocs keylocs
 
 		fastest :: Key -> S.Set Key -> Maybe ([Key], Integer)
 		fastest lastkey keyset = if null options then Nothing else Just $ minimumBy (compare `on` snd) $ options
 			where options = do
 				nextkey <- M.keys keylocs
 				guard $ not $ nextkey `elem` keyset
-				let (dist, keyreq) = routes ! (lastkey, nextkey)
+				let route = routes ! (lastkey, nextkey)
+				guard $ isJust route
+				let Just (dist, keyreq) = route
 				guard $ keyreq `S.isSubsetOf` keyset
 				let newkeys = nextkey `S.insert` keyset
 				if newkeys == M.keysSet keylocs
@@ -161,7 +170,8 @@ type Memo = M.Map (S.Set Key, Key) (Maybe ([Key], Integer))
 fastestRoute_tree_dyn :: State -> Maybe ([Key], Integer)
 fastestRoute_tree_dyn (maze, startloc, keylocs, keyset) = fst $ fastest '@' keyset initmemo
 	where
-		routes = keyroutes maze startloc keylocs
+		startlocs = listArray ('@','@') [startloc]
+		routes = keyroutes maze startlocs keylocs
 
 		initmemo :: Memo
 		initmemo = M.empty
@@ -176,17 +186,75 @@ fastestRoute_tree_dyn (maze, startloc, keylocs, keyset) = fst $ fastest '@' keys
 				result = if null options then Nothing else Just $ minimumBy (compare `on` snd) $ options
 				(options, finalmemo) = getoptions (M.keys keylocs) memo
 				getoptions [] memo = ([], memo)
-				getoptions (nextkey:restkeys) memo
-					| nextkey `elem` keyset = getoptions restkeys memo
-					| not $ keyreq `S.isSubsetOf` keyset = getoptions restkeys memo
-					| newkeys == M.keysSet keylocs = let (rest, memo'') = getoptions restkeys memo in (([nextkey], dist):rest, memo'')
+				getoptions (nextkey:restkeys) memo = case makeoption nextkey memo of
+					Nothing -> getoptions restkeys memo
+					Just (option, memo') -> let (rest, memo'') = getoptions restkeys memo' in (option:rest, memo'')
+				makeoption nextkey memo
+					| nextkey `elem` keyset = Nothing
+					| isNothing route = Nothing
+					| not $ keyreq `S.isSubsetOf` keyset = Nothing
+					| newkeys == M.keysSet keylocs = Just (([nextkey], dist), memo)
 					| otherwise = case continue of
-							Nothing -> getoptions restkeys memo'
-							Just (restroute, restdist) -> let (rest, memo'') = getoptions restkeys memo' in ((nextkey:restroute, dist+restdist):rest, memo'')
+							Nothing -> Nothing
+							Just (restroute, restdist) -> Just ((nextkey:restroute, dist+restdist), memo')
 					where
-						(dist, keyreq) = routes ! (lastkey, nextkey)
+						route = routes ! (lastkey, nextkey)
+						Just (dist, keyreq) = route
 						newkeys = nextkey `S.insert` keyset
 						(continue, memo') = fastest nextkey newkeys memo
+
+type MemoMulti = M.Map (S.Set Key, Key, Key, Key, Key) (Maybe ([Key], Integer))
+fastestRouteMulti :: State -> Maybe ([Key], Integer)
+fastestRouteMulti (origmaze, (startx, starty), keylocs, keyset) = fst $ fastest '=' '>' '?' '@' keyset initmemo
+	where
+		maze = origmaze // [((startx+x, starty+y), Wall) | (x,y) <- [(0,0),(1,0),(-1,0),(0,1),(0,-1)]]
+		startlocs = listArray ('=', '@') [(startx+x, starty+y) | x <- [-1, 1], y <- [-1, 1]]
+		routes = keyroutes maze startlocs keylocs
+
+		initmemo :: MemoMulti
+		initmemo = M.empty
+
+		fastest :: Key -> Key -> Key -> Key -> S.Set Key -> MemoMulti -> (Maybe ([Key], Integer), MemoMulti)
+		fastest lk1 lk2 lk3 lk4 keyset memo
+			| (keyset, lk1, lk2, lk3, lk4) `M.member` memo = (memo M.! (keyset, lk1, lk2, lk3, lk4), memo)
+			| otherwise = let (res, memo') = calcFastest lk1 lk2 lk3 lk4 keyset memo in (res, M.insert (keyset, lk1, lk2, lk3, lk4) res memo')
+		calcFastest :: Key -> Key -> Key -> Key -> S.Set Key -> MemoMulti -> (Maybe ([Key], Integer), MemoMulti)
+		calcFastest lk1 lk2 lk3 lk4 keyset memo = (result, finalmemo)
+			where
+				result = if null options then Nothing else Just $ minimumBy (compare `on` snd) $ options
+				(options, finalmemo) = getoptions (M.keys keylocs) memo
+				getoptions [] memo = ([], memo)
+				getoptions (nextkey:restkeys) memo = (option ++ rest, memo'')
+					where
+						(option, memo') = makeoption nextkey memo
+						(rest, memo'') = getoptions restkeys memo'
+				makeoption nextkey memo = (catMaybes [res1, res2, res3, res4], memo'''')
+					where
+						(res1, memo') = makeoptionfrom 1 lk1 nextkey memo
+						(res2, memo'') = makeoptionfrom 2 lk2 nextkey memo'
+						(res3, memo''') = makeoptionfrom 3 lk3 nextkey memo''
+						(res4, memo'''') = makeoptionfrom 4 lk4 nextkey memo'''
+				makeoptionfrom ix lastkey nextkey memo
+					| nextkey `elem` keyset = (Nothing, memo)
+					| isNothing route = (Nothing, memo)
+					| not $ keyreq `S.isSubsetOf` keyset = (Nothing, memo)
+					| newkeys == M.keysSet keylocs = (Just ([nextkey], dist), memo)
+					| otherwise = case continue of
+							Nothing -> (Nothing, memo)
+							Just (restroute, restdist) -> (Just (nextkey:restroute, dist+restdist), memo')
+					where
+						route = routes ! (lastkey, nextkey)
+						Just (dist, keyreq) = route
+						newkeys = nextkey `S.insert` keyset
+						update 1 x a b c d = (x, b, c, d)
+						update 2 x a b c d = (a, x, c, d)
+						update 3 x a b c d = (a, b, x, d)
+						update 4 x a b c d = (a, b, c, x)
+						(nk1, nk2, nk3, nk4) = update ix nextkey lk1 lk2 lk3 lk4
+						(continue, memo') = fastest nk1 nk2 nk3 nk4 newkeys memo
+
+showRoutes :: Array (Key,Key) (Maybe (Integer, S.Set Key)) -> String
+showRoutes routes = unlines $ [ show (k1, k2, dist, keyreq) | ((k1, k2), val) <- assocs routes, isJust val, let Just (dist, keyreq) = val ]
 
 --fastestRoute = fastestRoute_brute
 --fastestRoute = fastestRoute_dijkstra
@@ -199,6 +267,11 @@ tests = do
 	testMaze "########################\n#...............b.C.D.f#\n#.######################\n#.....@.a.B.c.d.A.e.F.g#\n########################" ("BACDEFG", 132)
 	testMaze "#################\n#i.G..c...e..H.p#\n########.########\n#j.A..b...f..D.o#\n########@########\n#k.E..a...g..B.n#\n########.########\n#l.F..d...h..C.m#\n#################" ("AFBJGNHDLOEPCIKM", 136)
 	testMaze "########################\n#@..............ac.GI.b#\n###d#e#f################\n###A#B#C################\n###g#h#i################\n########################" ("ACFIDGBEH", 81)
+
+	testMazeMulti "#######\n#a.#Cd#\n##...##\n##.@.##\n##...##\n#cB#Ab#\n#######" ("ABCD", 8)
+	testMazeMulti "###############\n#d.ABC.#.....a#\n######...######\n######.@.######\n######...######\n#b.....#.....c#\n###############" ("ABCD", 24)
+	testMazeMulti "#############\n#DcBa.#.GhKl#\n#.###...#I###\n#e#d#.@.#j#k#\n###C#...###J#\n#fEbA.#.FgHi#\n#############" ("ABCDEFGHIJKL", 32)
+	testMazeMulti "#############\n#g#f.D#..h#l#\n#F###e#E###.#\n#dCba...BcIJ#\n#####.@.#####\n#nK.L...G...#\n#M###N#H###.#\n#o#m..#i#jk.#\n#############" ("EHIABCDFGKJLNMO", 72)
 	where
 		testMaze s (_, d) = do
 			let maze = readMaze s
@@ -206,7 +279,11 @@ tests = do
 			--test $ (snd $ fromJust $ fastestRoute_dijkstra maze) == d
 			--test $ (snd $ fromJust $ fastestRoute_tree maze) == d
 			test $ (snd $ fromJust $ fastestRoute maze) == d
+		testMazeMulti s (_, d) = do
+			let maze = readMaze s
+			test $ (snd $ fromJust $ fastestRouteMulti maze) == d
 
 main = do
 	maze <- getInput
 	print $ fastestRoute maze
+	print $ fastestRouteMulti maze
