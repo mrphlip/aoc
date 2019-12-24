@@ -1,22 +1,22 @@
-all: 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+all: 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
 
 clean:
-	rm -f [0-9] [0-9][0-9] *.hi *.o
+	rm -f [0-9][0-9] *.hi *.o
 
 .PHONY: all clean
 
 %: %.hs
 	ghc -threaded -with-rtsopts="-N" -o $@ $^
 
-1: 1.hs
-2: 2.hs Utils.hs Intcode.hs
-3: 3.hs Utils.hs
-4: 4.hs
-5: 5.hs Utils.hs Intcode.hs
-6: 6.hs
-7: 7.hs Utils.hs Intcode.hs
-8: 8.hs Utils.hs
-9: 9.hs Utils.hs Intcode.hs
+01: 01.hs
+02: 02.hs Utils.hs Intcode.hs
+03: 03.hs Utils.hs
+04: 04.hs
+05: 05.hs Utils.hs Intcode.hs
+06: 06.hs
+07: 07.hs Utils.hs Intcode.hs
+08: 08.hs Utils.hs
+09: 09.hs Utils.hs Intcode.hs
 10: 10.hs Utils.hs
 11: 11.hs Utils.hs Intcode.hs
 12: 12.hs Utils.hs
