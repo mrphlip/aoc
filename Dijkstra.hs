@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Dijkstra(DistMap, buildDistMap, findNearest, buildDistMapSquare, buildDistMapSquareExpand, findNearestSquare, findNearestSquareExpand) where
+module Dijkstra(DistMap, buildDistMap, findNearest, buildDistMapSquare, buildDistMapSquareExpand, findNearestSquare, findNearestSquareExpand, makeArgsSquare, makeArgsSquareExpand) where
 
 import Data.Ix
 import Data.Array

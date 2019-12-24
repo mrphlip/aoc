@@ -1,4 +1,4 @@
-all: 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 23
+all: 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 23
 
 clean:
 	rm -f [0-9] [0-9][0-9] *.hi *.o
@@ -27,4 +27,5 @@ clean:
 17: 17.hs Utils.hs Intcode.hs Direction.hs
 18: 18.hs Utils.hs Direction.hs Dijkstra.hs
 19: 19.hs Utils.hs Intcode.hs Direction.hs
+20: 20.hs Utils.hs Direction.hs Dijkstra.hs
 23: 23.hs Utils.hs Intcode.hs
