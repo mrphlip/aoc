@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, setExpand, ExpandIx, test, unfoldr1) where
+module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, setExpand, ExpandIx, test, unfoldr1, extendedGcd, modRecip) where
 
 import Data.Array
 import Data.List
@@ -66,3 +66,17 @@ test val = assert val $ return ()
 
 unfoldr1 :: (a -> Maybe a) -> a -> [a]
 unfoldr1 f = unfoldr (liftM (\x->(x,x)) . f)
+
+extendedGcd :: (Integral x) => x -> x -> (x,x,x)
+extendedGcd a b = doExtendedGcd a b 0 1 1 0
+	where
+	doExtendedGcd a 0 _ lastx _ lasty = (lastx, lasty, a)
+	doExtendedGcd a b x lastx y lasty = let q = a `div` b in doExtendedGcd b (a `mod` b) (lastx - q*x) x (lasty - q*y) y
+
+-- returns the reciprical of n, modulo m... ie (n * recip) `mod` m == 1
+modRecip :: (Integral x) => x -> x -> x
+modRecip n m
+	| m == 0 = error "divide by zero"
+	| c /= 1 = error "recip: not invertible - value not coprime to modulus"
+	| otherwise = a
+	where (a, b, c) = extendedGcd n m
