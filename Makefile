@@ -1,4 +1,4 @@
-all: 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+all: 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
 
 clean:
 	rm -f [0-9] [0-9][0-9] *.hi *.o
@@ -31,3 +31,4 @@ clean:
 21: 21.hs Utils.hs Intcode.hs
 22: 22.hs Utils.hs
 23: 23.hs Utils.hs Intcode.hs
+24: 24.hs Utils.hs
