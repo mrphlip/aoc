@@ -10,7 +10,7 @@ root = "COM"
 
 readInput :: IO [(String, String)]
 readInput = do
-	dat <- readFile "6.txt"
+	dat <- readFile "06.txt"
 	return $ parseInput dat
 
 parseInput :: String -> [(String, String)]

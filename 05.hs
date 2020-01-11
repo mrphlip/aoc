@@ -10,7 +10,7 @@ type Val = Integer
 
 getInput :: IO (IntcodeMem Val)
 getInput = do
-	dat <- readFile "5.txt"
+	dat <- readFile "05.txt"
 	return $ readProg dat
 
 main :: IO ()

@@ -6,7 +6,7 @@ import Intcode
 import Utils
 
 readInput = do
-	dat <- readFile "7.txt"
+	dat <- readFile "07.txt"
 	return $ readProg dat
 
 runProgsA :: IntcodeMem Integer -> [Integer] -> Integer -> Integer

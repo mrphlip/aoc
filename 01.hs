@@ -11,7 +11,7 @@ calcFuelFuel x = sum $ unfoldr iterfunc x
 
 getInput :: IO [Integer]
 getInput = do
-	dat <- readFile "1.txt"
+	dat <- readFile "01.txt"
 	return $ map read $ lines dat
 
 tests :: IO ()

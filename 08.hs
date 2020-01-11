@@ -15,7 +15,7 @@ overlayLayer = zipWith overlay
 mergeLayers = foldr1 overlayLayer
 
 readData = do
-	dat <- readFile "8.txt"
+	dat <- readFile "08.txt"
 	return $ parsePixels dat
 
 parsePixels dat = map conv $ takeWhile (/='\n') dat

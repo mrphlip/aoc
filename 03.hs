@@ -83,7 +83,7 @@ tests = do
 
 readInput :: IO ([Step], [Step])
 readInput = do
-	dat <- readFile "3.txt"
+	dat <- readFile "03.txt"
 	let l1:l2:_ = lines dat
 	return (readTrails l1, readTrails l2)
 
