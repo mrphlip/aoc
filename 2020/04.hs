@@ -5,19 +5,28 @@ import Data.Maybe
 import Data.List.Split (splitOn)
 import Text.Read
 
-data Passport = Passport (Maybe String) (Maybe String) (Maybe String) (Maybe String) (Maybe String) (Maybe String) (Maybe String) (Maybe String) deriving (Eq, Show, Read)
+data Passport = Passport {
+	byr :: Maybe String,
+	iyr :: Maybe String,
+	eyr :: Maybe String,
+	hgt :: Maybe String,
+	hcl :: Maybe String,
+	ecl :: Maybe String,
+	pid :: Maybe String,
+	cid :: Maybe String
+} deriving (Eq, Show, Read)
 
 emptyPassport = Passport Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 addField :: Passport -> String -> Passport
-addField (Passport byr iyr eyr hgt hcl ecl pid cid) ('b':'y':'r':':':val) = Passport (Just val) iyr eyr hgt hcl ecl pid cid
-addField (Passport byr iyr eyr hgt hcl ecl pid cid) ('i':'y':'r':':':val) = Passport byr (Just val) eyr hgt hcl ecl pid cid
-addField (Passport byr iyr eyr hgt hcl ecl pid cid) ('e':'y':'r':':':val) = Passport byr iyr (Just val) hgt hcl ecl pid cid
-addField (Passport byr iyr eyr hgt hcl ecl pid cid) ('h':'g':'t':':':val) = Passport byr iyr eyr (Just val) hcl ecl pid cid
-addField (Passport byr iyr eyr hgt hcl ecl pid cid) ('h':'c':'l':':':val) = Passport byr iyr eyr hgt (Just val) ecl pid cid
-addField (Passport byr iyr eyr hgt hcl ecl pid cid) ('e':'c':'l':':':val) = Passport byr iyr eyr hgt hcl (Just val) pid cid
-addField (Passport byr iyr eyr hgt hcl ecl pid cid) ('p':'i':'d':':':val) = Passport byr iyr eyr hgt hcl ecl (Just val) cid
-addField (Passport byr iyr eyr hgt hcl ecl pid cid) ('c':'i':'d':':':val) = Passport byr iyr eyr hgt hcl ecl pid (Just val)
+addField passport ('b':'y':'r':':':val) = passport { byr = Just val }
+addField passport ('i':'y':'r':':':val) = passport { iyr = Just val }
+addField passport ('e':'y':'r':':':val) = passport { eyr = Just val }
+addField passport ('h':'g':'t':':':val) = passport { hgt = Just val }
+addField passport ('h':'c':'l':':':val) = passport { hcl = Just val }
+addField passport ('e':'c':'l':':':val) = passport { ecl = Just val }
+addField passport ('p':'i':'d':':':val) = passport { pid = Just val }
+addField passport ('c':'i':'d':':':val) = passport { cid = Just val }
 addField _ field = error $ "Bad field type - " ++ field
 
 getInput :: IO [Passport]
