@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, setExpand, ExpandIx, test, unfoldr1, extendedGcd, modRecip) where
+module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, setExpand, ExpandIx, test, unfoldr1, extendedGcd, modRecip, toBaseN, fromBaseN) where
 
 import Data.Array
 import Data.List
@@ -80,3 +80,14 @@ modRecip n m
 	| c /= 1 = error "recip: not invertible - value not coprime to modulus"
 	| otherwise = a
 	where (a, b, c) = extendedGcd n m
+
+toBaseN :: (Integral x) => x -> x -> [x]
+toBaseN base x = worker x []
+	where
+		worker x acc
+			| x < base = x:acc
+			| otherwise = let (d,m) = x `divMod` base in worker d (m:acc)
+
+fromBaseN :: (Integral x) => x -> [x] -> x
+fromBaseN base = foldl worker 0
+	where worker l r = l * base + r
