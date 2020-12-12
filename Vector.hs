@@ -20,6 +20,9 @@ instance Read a => Read (Vector3 a) where
 instance Show a => Show (Vector3 a) where
 	showsPrec n v = showsPrec n $ vecTuple3 v
 
+infixl 7 .*, ./
+infixl 6 .+, .-
+
 class Vector v where
 	(.+) :: (Num a) => v a -> v a -> v a
 	(.-) :: (Num a) => v a -> v a -> v a
