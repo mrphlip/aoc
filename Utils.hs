@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, setExpand, ExpandIx, test, unfoldr1, extendedGcd, modRecip, toBaseN, fromBaseN) where
+module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, setExpand, ExpandIx, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN) where
 
 import Data.Array
 import Data.List
@@ -67,11 +67,24 @@ test val = assert val $ return ()
 unfoldr1 :: (a -> Maybe a) -> a -> [a]
 unfoldr1 f = unfoldr (liftM (\x->(x,x)) . f)
 
+-- extendedGcd a b == (m, n, d)
+-- d == gcd a b
+-- m*a + n*b == d
 extendedGcd :: (Integral x) => x -> x -> (x,x,x)
 extendedGcd a b = doExtendedGcd a b 0 1 1 0
 	where
 	doExtendedGcd a 0 _ lastx _ lasty = (lastx, lasty, a)
 	doExtendedGcd a b x lastx y lasty = let q = a `div` b in doExtendedGcd b (a `mod` b) (lastx - q*x) x (lasty - q*y) y
+
+-- Chinese remainder theorem
+-- chineseRemainder (a1, m1) (a2, m2) == (a, m)
+-- for co-prime m1, m2
+-- such that m == gcd m1 m2 == m1 * m2
+-- and a is congruent to a1 (mod m1) and also a2 (mod m2)
+chineseRemainder :: (Integral x) => (x, x) -> (x, x) -> (x, x)
+chineseRemainder (a1, m1) (a2, m2) = case extendedGcd m1 m2 of
+	(x1, x2, 1) -> ((a1 * x2 * m2 + a2 * x1 * m1) `mod` (m1 * m2), m1 * m2)
+	_ -> error "Moduli must be coprime"
 
 -- returns the reciprical of n, modulo m... ie (n * recip) `mod` m == 1
 modRecip :: (Integral x) => x -> x -> x
