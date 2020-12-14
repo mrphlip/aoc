@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, setExpand, ExpandIx, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN) where
+module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN) where
 
 import Data.Array
 import Data.List
@@ -44,10 +44,13 @@ getExpand ix def arr
 	| inBounds arr ix = arr ! ix
 	| otherwise = def
 
+expand :: (ExpandIx i) => i -> a -> Array i a -> Array i a
+expand ix def arr
+	| inBounds arr ix = arr
+	| otherwise = changeBounds (expandBounds (bounds arr) ix) def arr
+
 setExpand :: (ExpandIx i) => i -> a -> a -> Array i a -> Array i a
-setExpand ix val def arr
-	| inBounds arr ix = arr // [(ix, val)]
-	| otherwise = changeBounds (expandBounds (bounds arr) ix) def arr // [(ix, val)]
+setExpand ix val def arr = expand ix def arr // [(ix, val)]
 
 class (Ix i) => ExpandIx i where
 	expandBounds :: (i,i) -> i -> (i,i)
