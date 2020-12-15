@@ -4,27 +4,11 @@ import Data.List
 import Data.Tuple
 import qualified Data.Map.Strict as M
 import Control.Exception
-import Utils
 
-{-
-vanEck :: [Integer] -> [Integer]
-vanEck starts = starts ++ unfoldr worker (initmap, finalval, genericLength starts - 1)
+vanEck_attempt1 :: [Integer] -> [Integer]
+vanEck_attempt1 starts = starts ++ worker initmap finalval (genericLength starts - 1)
 	where
-		initmap = M.fromList $ map swap $ enumerate $ init starts
-		finalval = last starts
-		calcnextval !lastseen !lastval !len
-			| lastval `M.member` lastseen = len - (lastseen M.! lastval)
-			| otherwise = 0
-		worker (!lastseen, !lastval, !len) = Just (nextval, (newmap, nextval, len + 1))
-			where
-				!nextval = calcnextval lastseen lastval len
-				!newmap = M.insert lastval len lastseen
--}
-
-vanEck :: [Integer] -> [Integer]
-vanEck starts = starts ++ worker initmap finalval (genericLength starts - 1)
-	where
-		initmap = M.fromList $ map swap $ enumerate $ init starts
+		initmap = M.fromList $ map swap $ zip [0..] $ init starts
 		finalval = last starts
 		calcnextval !lastseen !lastval !len
 			| lastval `M.member` lastseen = len - (lastseen M.! lastval)
@@ -33,6 +17,31 @@ vanEck starts = starts ++ worker initmap finalval (genericLength starts - 1)
 			where
 				!nextval = calcnextval lastseen lastval len
 				!newmap = M.insert lastval len lastseen
+
+vanEck_attempt2 :: [Integer] -> [Integer]
+vanEck_attempt2 starts = starts ++ unfoldr worker (initmap, finalval, genericLength starts - 1)
+	where
+		initmap = M.fromList $ map swap $ zip [0..] $ init starts
+		finalval = last starts
+		calcnextval !lastseen !lastval !len
+			| lastval `M.member` lastseen = len - (lastseen M.! lastval)
+			| otherwise = 0
+		worker (!lastseen, !lastval, !len) = Just (nextval, (newmap, nextval, len + 1))
+			where
+				!nextval = calcnextval lastseen lastval len
+				!newmap = M.insert lastval len lastseen
+
+vanEck_attempt3 :: [Integer] -> [Integer]
+vanEck_attempt3 starts = results
+	where
+		startlen = length starts
+		results = starts ++ (drop (startlen - 1) $ zipWith3 calcnext lastseenmaps results [0..])
+		lastseenmaps = scanl (\m (ix,x) -> M.insert x ix m) M.empty $ zip [0..] results
+		calcnext !lastseen !lastval !len
+			| lastval `M.member` lastseen = len - (lastseen M.! lastval)
+			| otherwise = 0
+
+vanEck = vanEck_attempt3
 
 tests :: IO ()
 tests = do
