@@ -41,7 +41,7 @@ vanEck_attempt3 starts = results
 			| lastval `M.member` lastseen = len - (lastseen M.! lastval)
 			| otherwise = 0
 
-vanEck = vanEck_attempt3
+vanEck = vanEck_attempt1
 
 tests :: IO ()
 tests = do

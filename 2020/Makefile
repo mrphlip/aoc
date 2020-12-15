@@ -22,7 +22,7 @@ clean:
 12: 12.hs ../Vector.hs
 13: 13.hs ../Utils.hs
 14: 14.hs ../Utils.hs
-15: 15.hs ../Utils.hs
+15: 15.hs
 #16: 16.hs
 #17: 17.hs
 #18: 18.hs
