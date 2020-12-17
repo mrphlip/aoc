@@ -10,9 +10,9 @@ vanEck_attempt1 starts = starts ++ worker initmap finalval (genericLength starts
 	where
 		initmap = M.fromList $ map swap $ zip [0..] $ init starts
 		finalval = last starts
-		calcnextval !lastseen !lastval !len
-			| lastval `M.member` lastseen = len - (lastseen M.! lastval)
-			| otherwise = 0
+		calcnextval !lastseen !lastval !len = case M.lookup lastval lastseen of
+			Just lastpos -> len - lastpos
+			Nothing -> 0
 		worker !lastseen !lastval !len = nextval:worker newmap nextval (len + 1)
 			where
 				!nextval = calcnextval lastseen lastval len
