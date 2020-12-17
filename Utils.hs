@@ -64,6 +64,21 @@ instance (ExpandIx a, ExpandIx b) => ExpandIx (a, b) where
 			(ax', bx') = expandBounds (ax,bx) x
 			(ay', by') = expandBounds (ay,by) y
 
+instance (ExpandIx a, ExpandIx b, ExpandIx c) => ExpandIx (a, b, c) where
+	expandBounds ((ax,ay,az), (bx,by,bz)) (x,y,z) = ((ax',ay',az'), (bx',by',bz'))
+		where
+			(ax', bx') = expandBounds (ax,bx) x
+			(ay', by') = expandBounds (ay,by) y
+			(az', bz') = expandBounds (az,bz) z
+
+instance (ExpandIx a, ExpandIx b, ExpandIx c, ExpandIx d) => ExpandIx (a, b, c, d) where
+	expandBounds ((aw,ax,ay,az), (bw,bx,by,bz)) (w,x,y,z) = ((aw',ax',ay',az'), (bw',bx',by',bz'))
+		where
+			(aw', bw') = expandBounds (aw,bw) w
+			(ax', bx') = expandBounds (ax,bx) x
+			(ay', by') = expandBounds (ay,by) y
+			(az', bz') = expandBounds (az,bz) z
+
 test :: Bool -> IO ()
 test val = assert val $ return ()
 
