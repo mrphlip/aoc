@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN) where
+module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN) where
 
 import Data.Array
 import Data.List
