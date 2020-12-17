@@ -20,7 +20,7 @@ parseInput :: String -> [Production]
 parseInput = map parseInputLine . filter (not . null) . lines
 
 parseInputLine :: String -> Production
-parseInputLine line = fst $ head $ filter (null.snd) $ P.readP_to_S readLine line
+parseInputLine line = runReadP readLine line
 	where
 		readLine :: P.ReadP Production
 		readLine = do

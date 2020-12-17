@@ -5,6 +5,7 @@ import qualified Text.ParserCombinators.ReadP as P
 import qualified Data.Set as S
 import qualified Data.Map.Strict as M
 import Control.Exception
+import Utils
 
 data Rule = Rule String [(String, Integer)] deriving (Eq, Show, Read)
 
@@ -14,7 +15,7 @@ getInput = do
 	return $ map parseInputLine $ lines dat
 
 parseInputLine :: String -> Rule
-parseInputLine line = fst $ head $ filter (null.snd) $ P.readP_to_S readLine line
+parseInputLine line = runReadP readLine line
 	where
 		readLine :: P.ReadP Rule
 		readLine = do

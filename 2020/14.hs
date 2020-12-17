@@ -17,7 +17,7 @@ getInput = do
 	return $ map readOperation $ lines dat
 
 readOperation :: String -> Operation
-readOperation line = fst $ head $ filter (null.snd) $ P.readP_to_S readLine line
+readOperation line = runReadP readLine line
 	where
 		readLine :: P.ReadP Operation
 		readLine = readMask P.+++ readSetMem

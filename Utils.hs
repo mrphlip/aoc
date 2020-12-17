@@ -1,10 +1,11 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN) where
+module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN, runReadP) where
 
 import Data.Array
 import Data.List
 import Control.Exception
 import Control.Monad
+import qualified Text.ParserCombinators.ReadP as P
 
 -- Not entirely sure why this isn't a builtin...
 split :: Char -> String -> [String]
@@ -121,3 +122,6 @@ toBaseN base x = worker x []
 fromBaseN :: (Integral x) => x -> [x] -> x
 fromBaseN base = foldl worker 0
 	where worker l r = l * base + r
+
+runReadP :: P.ReadP i -> String -> i
+runReadP reader line = fst $ head $ filter (null.snd) $ P.readP_to_S reader line

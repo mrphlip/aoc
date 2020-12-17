@@ -2,6 +2,7 @@
 import Data.List
 import qualified Text.ParserCombinators.ReadP as P
 import Control.Exception
+import Utils
 
 data Password = Password Integer Integer Char String deriving Eq
 
@@ -11,7 +12,7 @@ getInput = do
 	return $ map parseInputLine $ lines dat
 
 parseInputLine :: String -> Password
-parseInputLine line = fst $ head $ filter (null.snd) $ P.readP_to_S readLine line
+parseInputLine line = runReadP readLine line
 	where
 		readLine :: P.ReadP Password
 		readLine = do
