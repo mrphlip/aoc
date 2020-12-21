@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Utils (split, listArrayLen, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN, runReadP) where
+module Utils (split, listArrayLen, listArrayLen2, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN, runReadP, scanM, iterateM) where
 
 import Data.Array
 import Data.List
@@ -15,6 +15,8 @@ split c s
 
 listArrayLen :: (Num a, Ix a) => [b] -> Array a b
 listArrayLen xs = listArray (0, genericLength xs - 1) xs
+listArrayLen2 :: (Num a, Ix a) => [[b]] -> Array (a,a) b
+listArrayLen2 xs = array ((0, 0), (genericLength (head xs) - 1, genericLength xs - 1)) [((x,y),cell)|(y,row) <- enumerate xs, (x,cell) <- enumerate row]
 
 enumerate :: (Num n) => [a] -> [(n, a)]
 enumerate = enumerateFrom 0
@@ -125,3 +127,17 @@ fromBaseN base = foldl worker 0
 
 runReadP :: P.ReadP i -> String -> i
 runReadP reader line = fst $ head $ filter (null.snd) $ P.readP_to_S reader line
+
+-- scanM is to foldM what scanl is to foldl
+scanM :: (Monad m) => (a -> b -> m a) -> a -> [b] -> m [a]
+scanM f a [] = return [a]
+scanM f a (b:bs) = do
+	a' <- f a b
+	fmap (a:) $ scanM f a' bs
+
+-- `iterateM n f a` is akin to `take (n+1) $ iterate f a`
+iterateM :: (Integral i, Monad m) => i -> (a -> m a) -> a -> m [a]
+iterateM n _ a | n <= 0 = return [a]
+iterateM n f a = do
+	a' <- f a
+	fmap (a:) $ iterateM (n-1) f a'
