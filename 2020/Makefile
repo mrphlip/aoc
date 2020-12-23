@@ -30,7 +30,8 @@ clean:
 20: 20.hs ../Utils.hs ../Direction.hs
 21: 21.hs ../Utils.hs
 22: 22.hs
-#23: 23.hs
+23: 23.cpp
+	g++ -O3 -o $@ $^
 #24: 24.hs
 #25: 25.hs
 
