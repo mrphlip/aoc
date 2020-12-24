@@ -3,8 +3,8 @@ module Vector (Vector(..), Vector2(Vector2), Vector3(Vector3), crossProduct, tup
 
 import Data.List
 
-data Vector2 a = Vector2 a a deriving Eq
-data Vector3 a = Vector3 a a a deriving Eq
+data Vector2 a = Vector2 a a deriving (Eq, Ord)
+data Vector3 a = Vector3 a a a deriving (Eq, Ord)
 
 instance Read a => Read (Vector2 a) where
 	readsPrec n s = do
