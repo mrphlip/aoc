@@ -37,7 +37,7 @@ steps = foldl (.+) (Vector2 0 0) . map step
 getInitTiles :: [[Step]] -> S.Set (Vector2 Integer)
 getInitTiles dat = M.keysSet $ M.filter id $ M.fromListWith (/=) $ map (,True) $ map steps dat
 
-neighbours :: Vector2 Integer -> Vector2 Integer
+neighbours :: Vector2 Integer -> [Vector2 Integer]
 neighbours p = map (p .+) $ map step allSteps
 
 iterstep :: S.Set (Vector2 Integer) -> S.Set (Vector2 Integer)
@@ -50,7 +50,6 @@ iterstep tiles = (tiles `S.union` toFlipWhite) `S.difference` toFlipBlack
 			where count = neighbourCount M.! t
 		shouldFlipWhite t = count == 2
 			where count = neighbourCount M.! t
-
 
 tests :: IO ()
 tests = do

@@ -15,14 +15,13 @@ split c s
 
 listArrayLen :: (Num a, Ix a) => [b] -> Array a b
 listArrayLen xs = listArray (0, genericLength xs - 1) xs
-listArrayLen2 :: (Num a, Ix a) => [[b]] -> Array (a,a) b
+listArrayLen2 :: (Num a, Ix a, Enum a) => [[b]] -> Array (a,a) b
 listArrayLen2 xs = array ((0, 0), (genericLength (head xs) - 1, genericLength xs - 1)) [((x,y),cell)|(y,row) <- enumerate xs, (x,cell) <- enumerate row]
 
-enumerate :: (Num n) => [a] -> [(n, a)]
-enumerate = enumerateFrom 0
-enumerateFrom :: (Num n) => n -> [a] -> [(n, a)]
-enumerateFrom _ [] = []
-enumerateFrom n (x:xs) = (n,x) : enumerateFrom (n+1) xs
+enumerate :: (Num n, Enum n) => [a] -> [(n, a)]
+enumerate = zip [0..]
+enumerateFrom :: (Num n, Enum n) => n -> [a] -> [(n, a)]
+enumerateFrom n = zip [n..]
 
 chunk :: (Integral i) => i -> [a] -> [[a]]
 chunk _ [] = []
