@@ -1,8 +1,10 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Utils (split, listArrayLen, listArrayLen2, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN, runReadP, scanM, iterateM) where
+module Utils (split, listArrayLen, listArrayLen2, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN, showBaseN, readBaseN, runReadP, scanM, iterateM) where
 
 import Data.Array
+import Data.Char
 import Data.List
+import qualified Data.Map.Strict as M
 import Control.Exception
 import Control.Monad
 import qualified Text.ParserCombinators.ReadP as P
@@ -123,6 +125,15 @@ toBaseN base x = worker x []
 fromBaseN :: (Integral x) => x -> [x] -> x
 fromBaseN base = foldl worker 0
 	where worker l r = l * base + r
+
+digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+toDigits = M.fromList $ zip [0..] digits
+fromDigits = (M.fromList $ zip digits [0..]) `M.union` (M.fromList $ zip (map toLower digits) [0..])
+
+readBaseN :: (Integral x) => x -> String -> x
+readBaseN base = fromBaseN base . map (fromInteger . (fromDigits M.!))
+showBaseN :: (Integral x) => x -> x -> String
+showBaseN base = map ((toDigits M.!) . toInteger) . toBaseN base
 
 runReadP :: P.ReadP i -> String -> i
 runReadP reader line = fst $ head $ filter (null.snd) $ P.readP_to_S reader line
