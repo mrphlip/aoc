@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Utils (split, listArrayLen, listArrayLen2, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN, showBaseN, readBaseN, runReadP, scanM, iterateM) where
+module Utils (split, listArrayLen, listArrayLen2, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN, showBaseN, readBaseN, runReadP, scanM, iterateM, counter) where
 
 import Data.Array
 import Data.Char
@@ -151,3 +151,9 @@ iterateM n _ a | n <= 0 = return [a]
 iterateM n f a = do
 	a' <- f a
 	fmap (a:) $ iterateM (n-1) f a'
+
+counter :: (Ord a, Num i) => [a] -> M.Map a i
+counter = foldl (flip (M.alter increment)) M.empty
+	where
+		increment Nothing = Just 1
+		increment (Just n) = Just $ n + 1
