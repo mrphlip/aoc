@@ -38,6 +38,7 @@ tests = do
 
 main :: IO ()
 main = do
+	tests
 	vals <- getInput
 	print $ doSteps 80 $ getCounts vals
 	print $ doSteps 256 $ getCounts vals

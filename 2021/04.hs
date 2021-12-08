@@ -65,6 +65,7 @@ tests = do
 
 main :: IO ()
 main = do
+	tests
 	(calls, boards) <- getInput
 	let (partA, partB) = doPuzzle calls boards
 	print partA

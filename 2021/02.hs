@@ -43,6 +43,7 @@ tests = do
 
 main :: IO ()
 main = do
+	tests
 	dat <- getInput
 	print $ uncurry (*) $ partA dat
 	print $ uncurry (*) $ partB dat

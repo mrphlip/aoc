@@ -54,6 +54,7 @@ tests = do
 
 main :: IO ()
 main = do
+	tests
 	(bitlen, values) <- getInput
 	print $ uncurry (*) $ partA bitlen values
 	print $ uncurry (*) $ partB bitlen values

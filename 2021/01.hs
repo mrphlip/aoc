@@ -24,6 +24,7 @@ tests = do
 
 main :: IO ()
 main = do
+	tests
 	dat <- getInput
 	print $ numIncreases dat
 	print $ numLongIncreases dat

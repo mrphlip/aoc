@@ -72,6 +72,7 @@ tests = do
 
 main :: IO ()
 main = do
+	tests
 	lines <- getInput
 	print $ countIntersections $ filter isCardinal lines
 	print $ countIntersections lines
