@@ -1,8 +1,9 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
 {-# LANGUAGE TupleSections #-}
-module Utils (split, listArrayLen, listArrayLen2, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN, showBaseN, readBaseN, runReadP, scanM, iterateM, counter, counterAccum) where
+module Utils (split, listArrayLen, listArrayLen2, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN, showBaseN, readBaseN, runReadP, scanM, iterateM, counter, counterAccum, padl, padr) where
 
 import Data.Array
+import Data.Bits
 import Data.Char
 import Data.List
 import qualified Data.Map.Strict as M
@@ -158,3 +159,10 @@ counter = M.fromListWith (+) . map (,1)
 
 counterAccum :: (Ord a, Num i) => [(a,i)] -> M.Map a i
 counterAccum = M.fromListWith (+)
+
+padl :: (Integral i) => a -> i -> [a] -> [a]
+padl p l xs = genericReplicate n p ++ xs
+	where n = max 0 $ l - genericLength xs
+
+padr :: (Integral i) => a -> i -> [a] -> [a]
+padr p l xs = genericTake l $ xs ++ repeat p
