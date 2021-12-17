@@ -3,7 +3,10 @@ module Dijkstra(DistMap, buildDistMap, findNearest, buildDistMapSquare, buildDis
 
 import Data.Ix
 import Data.Array
+import Data.Function
+import Data.List
 import Data.Maybe
+import qualified Data.Set as S
 import Direction
 import Utils
 
@@ -16,25 +19,28 @@ type DistMap i n d = Array i (Maybe (n, Maybe d, i))
 -- istarget == stop mapping once we find the route to any target - can be "const False" to route the entire map
 -- returns a DistMap, and the location of the target point found
 buildDistMap :: (Ix i, Num n, Ord n) => (i, i) -> i -> (i -> [(i, d, n)]) -> (i -> Bool) -> (DistMap i n d, Maybe i)
-buildDistMap mapbounds startnode neighbours istarget = iterfunc initdistmap
+buildDistMap mapbounds startnode neighbours istarget = iterfunc (S.singleton startnode) initdistmap
 	where
 		initdistmap = listArray mapbounds (repeat Nothing) // [ (startnode, Just (0, Nothing, startnode)) ]
-		iterfunc distmap = if shouldStop then (distmap, Nothing) else continue
+		iterfunc candidates distmap = if shouldStop then (distmap, Nothing) else continue
 			where
 				-- from, to, direction, distance from start point
-				points = [(p, p', d, ((\(Just (x,_,_))->x) $ distmap ! p) + n) |
-					p <- indices distmap,
-					isJust $ distmap ! p,
+				shouldStop = S.null candidates
+				pointDist p = let (Just (n,_,_)) = distmap ! p in n
+				closestDist = minimum $ map pointDist $ S.toList candidates
+				filtPoints = filter ((==closestDist).pointDist) $ S.toList candidates
+				distmapUpdates = [ (p', Just (closestDist + n, Just d, p)) |
+					p <- filtPoints,
 					(p', d, n) <- neighbours p,
-					isNothing $ distmap ! p' ]
-				shouldStop = null points
-				closestDist = minimum [ n | (_,_,_,n) <- points ]
-				filtPoints = [ x | x@(_,_,_,n) <- points, n == closestDist ]
-				newMap = distmap // [ (p', Just (n, Just d, p)) | (p,p',d,n) <- filtPoints ]
-				targetPoints = [ p' | (_,p',_,_) <- filtPoints, istarget p' ]
+					case distmap ! p' of Nothing -> True; (Just (n',_,_)) -> n' > closestDist + n ]
+				newMap = distmap // distmapUpdates
+				addedCandidates = S.fromList $ map fst distmapUpdates
+				removedCandidates = S.fromList $ filtPoints
+				newCandidates = candidates `S.union` addedCandidates `S.difference` removedCandidates
+				targetPoints = filter istarget filtPoints
 				continue = case targetPoints of
-					(p':_) -> (newMap, Just p')
-					_ -> iterfunc newMap
+					(p:_) -> (newMap, Just p)
+					[] -> iterfunc newCandidates newMap
 
 -- same parameters as buildDistMap
 -- returns a sequence of directions leading fromt he startnode to the target, if one is found
