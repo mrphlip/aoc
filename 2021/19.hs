@@ -66,9 +66,11 @@ transformVec (o, a) v = rotateVec o v .+ a
 alignPair :: Vec -> Vec -> Vec -> Vec -> [Alignment]
 alignPair a1 a2 b1 b2 = do
 	o <- allOrients
-	let aff = a1 .- rotateVec o b1
-	guard $ a2 == transformVec (o,aff) b2
-	return (o,aff)
+	let aff1 = a1 .- rotateVec o b1
+	let res1 = if a2 == transformVec (o,aff1) b2 then [(o,aff1)] else []
+	let aff2 = a2 .- rotateVec o b1
+	let res2 = if a1 == transformVec (o,aff2) b2 then [(o,aff2)] else []
+	res1 ++ res2
 
 alignScanner :: [Vec] -> [Vec] -> Fingerprint -> Fingerprint -> [Alignment]
 alignScanner s1 s2 f1 f2 = map fst $ reverse $ sortOn snd $ filter ((>1).snd) $ M.assocs candidateCount
