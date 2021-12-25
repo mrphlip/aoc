@@ -1,4 +1,4 @@
-all: 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 # 25
+all: 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 25
 
 clean:
 	rm -f [0-9][0-9] *.hi *.o ../*.hi ../*.o
@@ -31,4 +31,5 @@ clean:
 21: 21.hs ../Utils.hs
 22: 22.hs ../Utils.hs
 23: 23.hs ../Utils.hs ../Dijkstra.hs ../Direction.hs
-#25: 25.hs
+# no 24
+25: 25.hs ../Utils.hs ../Direction.hs
