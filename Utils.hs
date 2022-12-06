@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
 {-# LANGUAGE TupleSections #-}
-module Utils (split, listArrayLen, listArrayLen2, enumerate, chunk, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN, showBaseN, readBaseN, runReadP, scanM, iterateM, counter, counterAccum, padl, padr) where
+module Utils (split, listArrayLen, listArrayLen2, enumerate, chunk, window, inBounds, changeBounds, getExpand, expand, setExpand, ExpandIx, expandBounds, test, unfoldr1, extendedGcd, chineseRemainder, modRecip, toBaseN, fromBaseN, showBaseN, readBaseN, runReadP, scanM, iterateM, counter, counterAccum, padl, padr) where
 
 import Data.Array
 import Data.Bits
@@ -31,6 +31,10 @@ chunk :: (Integral i) => i -> [a] -> [[a]]
 chunk _ [] = []
 chunk n xs = front : chunk n back
 	where (front, back) = genericSplitAt n xs
+
+window :: (Integral i) => i -> [a] -> [[a]]
+window n xs = scanl (\a b -> (tail a) ++ [b]) lead rest
+	where (lead, rest) = genericSplitAt n xs
 
 inBounds :: (Ix i) => Array i a -> i -> Bool
 inBounds arr ix = inRange (bounds arr) ix
