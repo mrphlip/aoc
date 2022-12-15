@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
-module Range (Ranges, fromPairs, inRange, union, intersection, Range.subtract) where
+module Range (Ranges, fromPairs, toPairs, inRange, union, intersection, Range.subtract, rangeSize) where
 
 import Data.List (sortBy)
 import Data.Function
@@ -19,16 +19,19 @@ fromPairs ranges = M.fromList groupedranges
 			| a' <= b = group_cont (a, max b b') rest
 			| otherwise = (a,b) : group_cont (a', b') rest
 
+toPairs :: (Num i, Ord i) => Ranges i -> [(i, i)]
+toPairs = M.assocs
+
 inRange :: (Num i, Ord i) => i -> Ranges i -> Bool
 inRange x ranges = case M.lookupLE x ranges of
 	Just (_, endrange) -> x <= endrange
 	Nothing -> False
 
 union :: (Num i, Ord i) => Ranges i -> Ranges i -> Ranges i
-union a b = fromPairs $ M.assocs a ++ M.assocs b
+union a b = fromPairs $ toPairs a ++ toPairs b
 
 intersection :: (Num i, Ord i) => Ranges i -> Ranges i -> Ranges i
-intersection a b = fromPairs $ getPairs (M.assocs a) (M.assocs b)
+intersection a b = fromPairs $ getPairs (toPairs a) (toPairs b)
 	where
 		getPairs [] _ = []
 		getPairs _ [] = []
@@ -39,7 +42,7 @@ intersection a b = fromPairs $ getPairs (M.assocs a) (M.assocs b)
 			| otherwise = (bmin, bmax) : getPairs as brest
 
 subtract :: (Num i, Ord i, Enum i) => Ranges i -> Ranges i -> Ranges i
-subtract a b = fromPairs $ getPairs (M.assocs a) (M.assocs b)
+subtract a b = fromPairs $ getPairs (toPairs a) (toPairs b)
 	where
 		getPairs [] _ = []
 		getPairs as [] = as
@@ -53,3 +56,6 @@ subtract a b = fromPairs $ getPairs (M.assocs a) (M.assocs b)
 			| amin < bmin && amax <= bmax = (amin, pred bmin) : getPairs arest bs
 			| amin >= bmin && amax > bmax = getPairs ((succ bmax,amax):arest) brest
 			| amin >= bmin && amax <= bmax = getPairs arest bs
+
+rangeSize :: (Num i, Ord i) => Ranges i -> i
+rangeSize = sum . map (\(a,b) -> b - a + 1) . toPairs
