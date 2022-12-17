@@ -69,19 +69,19 @@ def getwellstate(i):
 	return tuple(a)
 
 states = {}
-wellheights = []
+wellheights = [0]
 i = 0
 while True:
 	drop(i % len(shapes))
 	state = getwellstate(i % len(shapes))
+	i += 1
 	wellheights.append(wellheight)
 	if state in states:
 		oldi, oldwellheight = states[state]
 		n = 1000000000000 - oldi
 		loops, rest = divmod(n, i - oldi)
 		res = wellheights[oldi + rest] + loops * (wellheight - oldwellheight)
-		print(res-1)  # TODO: figure out why this -1
+		print(res)
 		break
 	else:
 		states[state] = i, wellheight
-	i += 1
