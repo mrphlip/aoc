@@ -1,4 +1,4 @@
-all: 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 # 17 18 19 20 21 22 23 25
+all: 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 17 18 # 19 20 21 22 23 25
 
 clean:
 	rm -f [0-9][0-9] *.hi *.o ../*.hi ../*.o
@@ -24,8 +24,8 @@ clean:
 14: 14.hs ../Utils.hs
 15: 15.hs ../Utils.hs ../Range.hs
 # Not gonna do 16 in Haskell
-#17: 17.hs ../Utils.hs
-#18: 18.hs ../Utils.hs
+17: 17.hs ../Utils.hs ../Direction.hs
+18: 18.hs
 #19: 19.hs ../Utils.hs
 #20: 20.hs ../Utils.hs
 #21: 21.hs ../Utils.hs
