@@ -1,7 +1,7 @@
-all: 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 17 18 # 19 20 21 22 23 25
+all: 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 17 18 21a 21b
 
 clean:
-	rm -f [0-9][0-9] *.hi *.o ../*.hi ../*.o
+	rm -f [0-9][0-9] 21a 21b *.hi *.o ../*.hi ../*.o
 
 .PHONY: all clean
 
@@ -26,10 +26,5 @@ clean:
 # Not gonna do 16 in Haskell
 17: 17.hs ../Utils.hs ../Direction.hs
 18: 18.hs
-#19: 19.hs ../Utils.hs
-#20: 20.hs ../Utils.hs
-#21: 21.hs ../Utils.hs
-#22: 22.hs ../Utils.hs
-#23: 23.hs ../Utils.hs
-#24: 24.hs ../Utils.hs
-#25: 25.hs ../Utils.hs
+21a: 21a.hs
+21b: 21b.hs
