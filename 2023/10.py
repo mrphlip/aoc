@@ -168,7 +168,6 @@ neighbours = {
 dists = {}
 todo = {(sx,sy):0}
 while todo:
-	#print(len(todo), len(dists))
 	x, y = min(todo.keys(), key=todo.__getitem__)
 	d = todo.pop((x, y))
 	dists[x,y] = d
@@ -178,6 +177,7 @@ while todo:
 				todo[(x+dx, y+dy)] = d + 1
 # print(max(dists.values())) ???
 print(len(dists) // 2)
+
 
 n = 0
 for y in range(CY):
