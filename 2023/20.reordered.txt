@@ -1,0 +1,63 @@
+broadcaster -> bit0, xg, cd, sg
+
+%bit0 -> acc, bit1
+%bit1 -> acc, bit2
+%bit2 -> bit3
+%bit3 -> bit4, acc
+%bit4 -> acc, bit5
+%bit5 -> bit6, acc
+%bit6 -> bit7
+%bit7 -> acc, bit8
+%bit8 -> bit9, acc
+%bit9 -> bit10, acc
+%bit10 -> bit11, acc
+%bit11 -> acc
+&acc -> bit6, bit0, out, bit2
+&out -> finalacc
+
+%xg -> cf, pm
+%cf -> gj, pm
+%gj -> zd, pm
+%zd -> jv, pm
+%jv -> sp
+%sp -> pc
+%pc -> kt, pm
+%kt -> lt
+%lt -> pm, mx
+%mx -> nr, pm
+%nr -> vf, pm
+%vf -> pm
+&pm -> kt, xg, xp, jv, sp
+&xp -> finalacc
+
+%cd -> cc, nl
+%nl -> pj
+%pj -> cc, mj
+%mj -> qr, cc
+%qr -> gk
+%gk -> ln
+%ln -> zr, cc
+%zr -> cq
+%cq -> cj, cc
+%cj -> cc, nt
+%nt -> mn, cc
+%mn -> cc
+&cc -> cd, fc, qr, nl, gk, zr
+&fc -> finalacc
+
+%sg -> rs, rh
+%rh -> nb, rs
+%nb -> sl
+%sl -> kx
+%kx -> jx
+%jx -> rt, rs
+%rt -> qq
+%qq -> rs, hd
+%hd -> qs, rs
+%qs -> cl, rs
+%cl -> zx, rs
+%zx -> rs
+&rs -> sg, dd, sl, kx, nb, rt
+&dd -> finalacc
+
+&finalacc -> rx
