@@ -3,6 +3,8 @@ import Data.Char
 import Data.List
 import Control.Exception
 
+input = [123456..234567]
+
 checkVal :: [Int] -> Bool
 checkVal s = all id [
 		length s == 6,
@@ -40,7 +42,7 @@ tests = do
 		check False = throwIO $ AssertionFailed "test failed"
 
 main = do
-	let range = map digits $ [272091..815432]
+	let range = map digits $ input
 	let candidates = filter checkVal range
 	print $ length candidates
 	let candidatesext = filter checkValExt candidates

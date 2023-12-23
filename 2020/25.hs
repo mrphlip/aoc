@@ -6,6 +6,8 @@ import Control.Exception
 import Modulo
 import Utils
 
+input = (1234567, 7654321)
+
 magic_modulus = 20201227
 base_value = 7
 
@@ -48,6 +50,5 @@ tests = do
 
 main :: IO ()
 main = do
-	let card_pub = 16616892
-	let door_pub = 14505727
+	let (card_pub, door_pub) = input
 	print $ crack card_pub door_pub

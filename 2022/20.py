@@ -4,7 +4,7 @@ class A:
 		self.val = val
 
 dat = [
-	9038,7675,-2761, ...
+	9038,7675,-2761,[...snip...]
 ]
 #dat = [1, 2, -3, 3, -2, 0, 4]
 dat = [i * 811589153 for i in dat] # remove for part 1

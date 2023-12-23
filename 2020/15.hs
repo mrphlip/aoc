@@ -5,6 +5,8 @@ import Data.Tuple
 import qualified Data.Map.Strict as M
 import Control.Exception
 
+input = [1,2,3,4,5,6]
+
 vanEck_attempt1 :: [Integer] -> [Integer]
 vanEck_attempt1 starts = starts ++ worker initmap finalval (genericLength starts - 1)
 	where
@@ -58,5 +60,5 @@ tests = do
 		check False = throwIO $ AssertionFailed "test failed"
 
 main = do
-	print $ vanEck [14,1,17,0,3,20] !! 2019
-	print $ vanEck [14,1,17,0,3,20] !! 29999999
+	print $ vanEck input !! 2019
+	print $ vanEck input !! 29999999

@@ -5,6 +5,8 @@ import Utils
 
 type PlanetCoord = (Integer, Integer) -- pos, vel
 
+input = [(1, 1, 1), (2, 2, 2), (3, 3, 3), (4, 4, 4)]
+
 gravity :: Integer -> Integer -> Integer
 gravity a b
 	| a < b = 1
@@ -113,9 +115,9 @@ tests = do
 
 main :: IO ()
 main = do
-	let initx = [(5,0), (18,0), (16,0), (0,0)]
-	let inity = [(13,0), (-7,0), (3,0), (8,0)]
-	let initz = [(-3,0), (13,0), (4,0), (8,0)]
+	let initx = [(x, 0) | (x,y,z) <- input]
+	let inity = [(y, 0) | (x,y,z) <- input]
+	let initz = [(z, 0) | (x,y,z) <- input]
 	let stepsx = iterate step initx
 	let stepsy = iterate step inity
 	let stepsz = iterate step initz

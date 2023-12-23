@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+int myinput[9] = {1,2,3,4,5,6,7,8,9};
+
 struct node {
 	int val;
 	struct node *prev, *next;
@@ -69,7 +71,6 @@ void playgame(int* inbuf, int inbuflen, int* outbuf, int outbuflen, int len, int
 
 int main() {
 	int testdata[9] = {2,7,8,0,1,4,3,5,6};
-	int myinput[9] = {2,1,6,3,5,4,0,7,8};
 	int outbuf[8];
 
 	playgame(testdata, 9, outbuf, 8, 9, 10);
