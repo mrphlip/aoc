@@ -14,3 +14,5 @@ from myutils import crt, gcdext, primes, factor
 from matrix import Matrix
 from vector import Vector
 from modular import Modular
+from prioqueue import PrioQueue
+from dijkstra import dijkstra, dijkstra_grid
