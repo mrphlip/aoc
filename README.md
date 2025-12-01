@@ -7,3 +7,4 @@ A repository for my solutions to [Advent of Code](https://adventofcode.com/). Se
 * [2022](2022)
 * [2023](2023)
 * [2024](2024)
+* [2025](2025)
