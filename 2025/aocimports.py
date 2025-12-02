@@ -10,7 +10,7 @@ from math import sqrt, sin, cos, tan, atan, pi, ceil, floor
 from itertools import count, cycle, repeat, chain, groupby, product, permutations, combinations
 from functools import cache, cmp_to_key, partial, reduce
 
-from myutils import crt, gcdext, primes, factor
+from myutils import crt, gcdext, primes, primes_to, factor
 from matrix import Matrix
 from vector import Vector
 from modular import Modular

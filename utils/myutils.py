@@ -94,6 +94,12 @@ def primes():
 			i += step
 		D[i] = step
 
+def primes_to(n):
+	for i in primes():
+		if i >= n:
+			break
+		yield i
+
 def factor(n, limit=None, unlimit=0):
 	if n <= 0:
 		raise ValueError("Value must be positive non-zero")
