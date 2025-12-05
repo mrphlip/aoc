@@ -16,3 +16,4 @@ from vector import Vector
 from modular import Modular
 from prioqueue import PrioQueue
 from dijkstra import dijkstra, dijkstra_grid
+from ranges import Ranges
