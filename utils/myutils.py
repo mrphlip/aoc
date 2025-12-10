@@ -51,7 +51,7 @@ def gcd(a, b):
 def lcm(a, b):
 	return a * b // gcd(a, b)
 
-def crt(a1, m1, a2, m2):
+def _crt(a1, m1, a2, m2):
 	"""
 	Chinese Remainder theorem
 
@@ -67,6 +67,20 @@ def crt(a1, m1, a2, m2):
 		raise ValueError("Moduli must be coprime: %r, %r" % (m1, m2))
 	newm = m1 * m2
 	return (a1 * x2 * m2 + a2 * x1 * m1) % newm, newm
+
+def crt(a1, m1, a2, m2):
+	# Extended CRT for handling when the moduli are not coprime
+
+	m = gcd(m1, m2)
+	if m == 1:
+		return _crt(a1, m1, a2, m2)
+
+	if a1 % m != a2 % m:
+		raise ValueError("Offsets are not in sync")
+	ofs = a1 % m
+
+	resa, resm = _crt((a1 - ofs) // m, m1 // m, (a2 - ofs) // m, m2 // m)
+	return resa * m + ofs, resm * m
 
 def primes():
 	# https://stackoverflow.com/a/19391111
